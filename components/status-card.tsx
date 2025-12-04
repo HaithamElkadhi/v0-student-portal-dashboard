@@ -1,6 +1,7 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
+import { ReactNode } from "react"
 
 interface StatusCardProps {
   title: string
@@ -8,9 +9,11 @@ interface StatusCardProps {
   percentage: number
   icon: string
   color: "primary" | "secondary" | "accent"
+  onClick?: () => void
+  additionalContent?: ReactNode
 }
 
-export default function StatusCard({ title, status, percentage, icon, color }: StatusCardProps) {
+export default function StatusCard({ title, status, percentage, icon, color, onClick, additionalContent }: StatusCardProps) {
   const colorClasses = {
     primary: "bg-primary/10 text-primary",
     secondary: "bg-secondary/10 text-secondary",
@@ -24,7 +27,10 @@ export default function StatusCard({ title, status, percentage, icon, color }: S
   }
 
   return (
-    <Card className="p-6 border-2 hover:shadow-lg transition-shadow">
+    <Card
+      className={`p-6 border-2 hover:shadow-lg transition-shadow ${onClick ? "cursor-pointer" : ""}`}
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between mb-4">
         <div className={`text-3xl p-3 rounded-lg ${colorClasses[color]}`}>{icon}</div>
         <span className="text-xs font-medium px-2 py-1 bg-muted text-muted-foreground rounded">{percentage}%</span>
@@ -39,6 +45,15 @@ export default function StatusCard({ title, status, percentage, icon, color }: S
           style={{ width: `${percentage}%` }}
         />
       </div>
+
+      {onClick && additionalContent && (
+        <div className="mt-3 flex gap-2" onClick={(e) => e.stopPropagation()}>
+          {additionalContent}
+        </div>
+      )}
+      {onClick && !additionalContent && (
+        <p className="text-xs text-muted-foreground mt-3 text-center">Click to see details</p>
+      )}
     </Card>
   )
 }

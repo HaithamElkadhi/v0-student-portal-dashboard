@@ -7,8 +7,36 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { ArrowLeft } from "lucide-react"
 
+interface AdmissionData {
+  proposal?: string | string[]
+  paymentFirstRate?: string | string[]
+  emailForApplication?: string
+  declarationOfValue?: string | string[]
+  translation?: string | string[]
+  admissionFolderDocuments?: string
+  application?: string | string[]
+  admissionPayment?: string | string[]
+  applicationUniversity?: string | string[]
+  paymentAcceptanceFees?: string | string[]
+}
+
 interface StudentVerificationProps {
-  onSuccess: (info: { name: string; email: string; folderId: string }) => void
+  onSuccess: (info: {
+    name: string
+    email: string
+    folderId: string
+    surname?: string
+    gender?: string
+    phone?: string
+    whatsapp?: string
+    birthday?: string
+    citizenship?: string
+    countryOfResidence?: string
+    fullAddress?: string
+    passportValidity?: string
+    photo?: any
+    admission?: AdmissionData
+  }) => void
   onBack: () => void
 }
 
@@ -21,10 +49,12 @@ export default function StudentVerification({ onSuccess, onBack }: StudentVerifi
     name: "",
   })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleMethodSelect = (method: "email" | "folder") => {
     setLoginMethod(method)
     setStep("details")
+    setError(null)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,21 +62,66 @@ export default function StudentVerification({ onSuccess, onBack }: StudentVerifi
       ...formData,
       [e.target.name]: e.target.value,
     })
+    setError(null)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError(null)
 
-    // Simulate verification and fetch student details
-    setTimeout(() => {
-      setLoading(false)
-      onSuccess({
-        name: formData.name || "John Doe",
-        email: formData.email || "student@example.com",
-        folderId: formData.folderId || "JEE-2024-00001",
+    try {
+      const response = await fetch("/api/verify-student", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: loginMethod === "email" ? formData.email : undefined,
+          folderId: loginMethod === "folder" ? formData.folderId : undefined,
+        }),
       })
-    }, 1500)
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || "Verification failed. Please try again.")
+        setLoading(false)
+        return
+      }
+
+      if (data.success && data.student) {
+        // Use the student data from Airtable
+        const student = data.student
+        const fullName = student.name
+          ? `${student.name}${student.surname ? ` ${student.surname}` : ""}`
+          : student.surname || "Student"
+        
+        onSuccess({
+          name: fullName,
+          email: student.email,
+          folderId: student.folderId,
+          surname: student.surname,
+          gender: student.gender,
+          phone: student.phone,
+          whatsapp: student.whatsapp,
+          birthday: student.birthday,
+          citizenship: student.citizenship,
+          countryOfResidence: student.countryOfResidence,
+          fullAddress: student.fullAddress,
+          passportValidity: student.passportValidity,
+          photo: student.photo,
+          admission: student.admission,
+        })
+      } else {
+        setError("Student not found. Please check your credentials.")
+        setLoading(false)
+      }
+    } catch (err) {
+      console.error("Verification error:", err)
+      setError("An error occurred during verification. Please try again.")
+      setLoading(false)
+    }
   }
 
   return (
@@ -120,64 +195,42 @@ export default function StudentVerification({ onSuccess, onBack }: StudentVerifi
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {loginMethod === "email" ? (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Email Address</label>
-                    <Input
-                      type="email"
-                      name="email"
-                      placeholder="your@email.com"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                      className="border-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Full Name</label>
-                    <Input
-                      type="text"
-                      name="name"
-                      placeholder="John Doe"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                      className="border-input"
-                    />
-                  </div>
-                </>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Email Address</label>
+                  <Input
+                    type="email"
+                    name="email"
+                    placeholder="your@email.com"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    className="border-input"
+                  />
+                </div>
               ) : (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Folder ID</label>
-                    <Input
-                      type="text"
-                      name="folderId"
-                      placeholder="JEE-2024-00001"
-                      value={formData.folderId}
-                      onChange={handleInputChange}
-                      required
-                      className="border-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Full Name</label>
-                    <Input
-                      type="text"
-                      name="name"
-                      placeholder="John Doe"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                      className="border-input"
-                    />
-                  </div>
-                </>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Folder ID</label>
+                  <Input
+                    type="text"
+                    name="folderId"
+                    placeholder="JEE-2024-00001"
+                    value={formData.folderId}
+                    onChange={handleInputChange}
+                    required
+                    className="border-input"
+                  />
+                </div>
+              )}
+
+              {error && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <p className="text-sm text-destructive">{error}</p>
+                </div>
               )}
 
               <Button
                 type="submit"
-                disabled={loading || !formData.name || (loginMethod === "email" ? !formData.email : !formData.folderId)}
+                disabled={loading || (loginMethod === "email" ? !formData.email : !formData.folderId)}
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {loading ? "Verifying..." : "Verify & Continue"}
@@ -185,7 +238,7 @@ export default function StudentVerification({ onSuccess, onBack }: StudentVerifi
             </form>
 
             <p className="text-xs text-muted-foreground text-center mt-4">
-              A verification code will be sent to your email
+              Your credentials will be verified against our records
             </p>
           </Card>
         </>
