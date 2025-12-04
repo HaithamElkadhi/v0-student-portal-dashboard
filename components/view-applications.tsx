@@ -146,4 +146,3 @@ export default function ViewApplications({ open, onOpenChange, prospectId }: Vie
     </Dialog>
   )
 }
-
