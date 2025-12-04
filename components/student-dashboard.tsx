@@ -360,6 +360,7 @@ export default function StudentDashboard({ onLogout, studentInfo }: StudentDashb
         <ViewApplications
           open={applicationsModalOpen}
           onOpenChange={setApplicationsModalOpen}
+          prospectId={studentInfo.folderId}
         />
 
         {/* Recent Activity */}

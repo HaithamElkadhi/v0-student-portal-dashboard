@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -28,36 +29,55 @@ interface Application {
 interface ViewApplicationsProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  prospectId: string
 }
 
-export default function ViewApplications({ open, onOpenChange }: ViewApplicationsProps) {
-  // Mock data - will be replaced with Airtable data later
-  const mockApplications: Application[] = [
-    {
-      university: "University of Milan",
-      course: "Computer Science",
-      courseLanguage: "English",
-      degreeLevel: "Master",
-      campusCity: "Milan",
-      dateOfCandidacy: "2024-01-15",
-    },
-    {
-      university: "Sapienza University of Rome",
-      course: "Data Science",
-      courseLanguage: "Italian",
-      degreeLevel: "Master",
-      campusCity: "Rome",
-      dateOfCandidacy: "2024-02-20",
-    },
-    {
-      university: "University of Bologna",
-      course: "Artificial Intelligence",
-      courseLanguage: "English",
-      degreeLevel: "Bachelor",
-      campusCity: "Bologna",
-      dateOfCandidacy: "2024-03-10",
-    },
-  ]
+export default function ViewApplications({ open, onOpenChange, prospectId }: ViewApplicationsProps) {
+  const [applications, setApplications] = useState<Application[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (open && prospectId) {
+      fetchApplications()
+    } else {
+      // Reset when modal closes
+      setApplications([])
+      setError(null)
+    }
+  }, [open, prospectId])
+
+  const fetchApplications = async () => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const response = await fetch("/api/get-applications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prospectId }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to fetch applications")
+      }
+
+      if (data.success) {
+        setApplications(data.applications || [])
+      } else {
+        throw new Error(data.error || "Failed to fetch applications")
+      }
+    } catch (err) {
+      console.error("Error fetching applications:", err)
+      setError(err instanceof Error ? err.message : "Failed to fetch applications")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const formatDate = (dateString: string) => {
     try {
@@ -81,7 +101,15 @@ export default function ViewApplications({ open, onOpenChange }: ViewApplication
         </DialogHeader>
 
         <div className="mt-6">
-          {mockApplications.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Loading applications...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <p className="text-destructive">{error}</p>
+            </div>
+          ) : applications.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-muted-foreground">No applications found.</p>
             </div>
@@ -99,14 +127,14 @@ export default function ViewApplications({ open, onOpenChange }: ViewApplication
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockApplications.map((application, index) => (
+                  {applications.map((application, index) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium">{application.university}</TableCell>
-                      <TableCell>{application.course}</TableCell>
-                      <TableCell>{application.courseLanguage}</TableCell>
-                      <TableCell>{application.degreeLevel}</TableCell>
-                      <TableCell>{application.campusCity}</TableCell>
-                      <TableCell>{formatDate(application.dateOfCandidacy)}</TableCell>
+                      <TableCell className="font-medium">{application.university || "—"}</TableCell>
+                      <TableCell>{application.course || "—"}</TableCell>
+                      <TableCell>{application.courseLanguage || "—"}</TableCell>
+                      <TableCell>{application.degreeLevel || "—"}</TableCell>
+                      <TableCell>{application.campusCity || "—"}</TableCell>
+                      <TableCell>{application.dateOfCandidacy ? formatDate(application.dateOfCandidacy) : "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
