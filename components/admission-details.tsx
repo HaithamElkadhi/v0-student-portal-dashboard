@@ -328,4 +328,3 @@ export default function AdmissionDetails({ open, onOpenChange, admissionData }: 
     </Dialog>
   )
 }
-
