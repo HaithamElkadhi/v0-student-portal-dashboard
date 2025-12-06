@@ -264,14 +264,11 @@ export default function StudentDashboard({ onLogout, studentInfo, onRefresh }: S
             <h3 className="text-3xl font-bold text-foreground">Information</h3>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Photo Section */}
-            <div className="space-y-3">
-              <label className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Photo
-              </label>
-              <div className="w-32 h-32 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/20 flex items-center justify-center overflow-hidden shadow-md">
+          {/* Photo and Basic Identity */}
+          <div className="flex flex-col md:flex-row gap-6 mb-8 pb-8 border-b border-border">
+            {/* Photo - Bigger */}
+            <div className="flex-shrink-0">
+              <div className="w-48 h-48 md:w-56 md:h-56 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border-2 border-primary/20 flex items-center justify-center overflow-hidden shadow-lg">
                 {studentInfo.photo && Array.isArray(studentInfo.photo) && studentInfo.photo.length > 0 ? (
                   <img
                     src={studentInfo.photo[0].url || studentInfo.photo[0].thumbnails?.large?.url}
@@ -285,7 +282,7 @@ export default function StudentDashboard({ onLogout, studentInfo, onRefresh }: S
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-bold text-2xl">
+                  <div className="w-full h-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center text-primary-foreground font-bold text-4xl">
                     {studentInfo.name
                       .split(" ")
                       .map((n) => n[0])
@@ -296,14 +293,14 @@ export default function StudentDashboard({ onLogout, studentInfo, onRefresh }: S
               </div>
             </div>
 
-            {/* Personal Info */}
-            <div className="space-y-4">
+            {/* Basic Identity Info */}
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                   <User className="w-3.5 h-3.5" />
                   Name
                 </label>
-                <p className="text-base font-semibold text-foreground">{studentInfo.name || "—"}</p>
+                <p className="text-lg font-semibold text-foreground">{studentInfo.name || "—"}</p>
               </div>
 
               <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
@@ -311,7 +308,7 @@ export default function StudentDashboard({ onLogout, studentInfo, onRefresh }: S
                   <User className="w-3.5 h-3.5" />
                   Surname
                 </label>
-                <p className="text-base font-semibold text-foreground">{studentInfo.surname || "—"}</p>
+                <p className="text-lg font-semibold text-foreground">{studentInfo.surname || "—"}</p>
               </div>
 
               <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
@@ -319,12 +316,30 @@ export default function StudentDashboard({ onLogout, studentInfo, onRefresh }: S
                   <User className="w-3.5 h-3.5" />
                   Gender
                 </label>
-                <p className="text-base font-semibold text-foreground">{studentInfo.gender || "—"}</p>
+                <p className="text-lg font-semibold text-foreground">{studentInfo.gender || "—"}</p>
+              </div>
+
+              <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Birthday
+                </label>
+                <p className="text-lg font-semibold text-foreground">
+                  {studentInfo.birthday
+                    ? new Date(studentInfo.birthday).toLocaleDateString()
+                    : "—"}
+                </p>
               </div>
             </div>
+          </div>
 
-            {/* Contact Info */}
-            <div className="space-y-4">
+          {/* Contact Information */}
+          <div className="mb-8 pb-8 border-b border-border">
+            <h4 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary" />
+              Contact Information
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                   <Mail className="w-3.5 h-3.5" />
@@ -349,62 +364,65 @@ export default function StudentDashboard({ onLogout, studentInfo, onRefresh }: S
                 <p className="text-base font-medium text-foreground">{studentInfo.whatsapp || "—"}</p>
               </div>
             </div>
+          </div>
 
-            {/* Dates & Legal */}
-            <div className="space-y-4">
-              <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5" />
-                  Birthday
-                </label>
-                <p className="text-base font-medium text-foreground">
-                  {studentInfo.birthday
-                    ? new Date(studentInfo.birthday).toLocaleDateString()
-                    : "—"}
-                </p>
-              </div>
+          {/* Location & Documents */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Location Info */}
+            <div>
+              <h4 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" />
+                Location
+              </h4>
+              <div className="space-y-4">
+                <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                    <Flag className="w-3.5 h-3.5" />
+                    Citizenship
+                  </label>
+                  <p className="text-base font-semibold text-foreground">
+                    {studentInfo.citizenship || "—"}
+                  </p>
+                </div>
 
-              <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                  <FileText className="w-3.5 h-3.5" />
-                  Passport Validity (in Months)
-                </label>
-                <p className="text-base font-medium text-foreground">
-                  {studentInfo.passportValidity
-                    ? `${studentInfo.passportValidity} months`
-                    : "—"}
-                </p>
+                <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                    <Globe className="w-3.5 h-3.5" />
+                    Country of Residence
+                  </label>
+                  <p className="text-base font-semibold text-foreground">
+                    {studentInfo.countryOfResidence || "—"}
+                  </p>
+                </div>
+
+                <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5" />
+                    Full Address
+                  </label>
+                  <p className="text-base font-medium text-foreground break-words">{studentInfo.fullAddress || "—"}</p>
+                </div>
               </div>
             </div>
 
-            {/* Location Info */}
-            <div className="space-y-4">
-              <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                  <Flag className="w-3.5 h-3.5" />
-                  Citizenship
-                </label>
-                <p className="text-base font-semibold text-foreground">
-                  {studentInfo.citizenship || "—"}
-                </p>
-              </div>
-
-              <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                  <Globe className="w-3.5 h-3.5" />
-                  Country of Residence
-                </label>
-                <p className="text-base font-semibold text-foreground">
-                  {studentInfo.countryOfResidence || "—"}
-                </p>
-              </div>
-
-              <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5" />
-                  Full Address
-                </label>
-                <p className="text-base font-medium text-foreground break-words">{studentInfo.fullAddress || "—"}</p>
+            {/* Documents */}
+            <div>
+              <h4 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" />
+                Documents
+              </h4>
+              <div className="space-y-4">
+                <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                    <FileText className="w-3.5 h-3.5" />
+                    Passport Validity (in Months)
+                  </label>
+                  <p className="text-base font-medium text-foreground">
+                    {studentInfo.passportValidity
+                      ? `${studentInfo.passportValidity} months`
+                      : "—"}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
