@@ -8,17 +8,31 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Card } from "@/components/ui/card"
+import { FileText, CreditCard, FolderOpen, CheckCircle, GraduationCap } from "lucide-react"
 
 interface AdmissionData {
+  // Bloc 1 - Proposal
+  proposalDocument?: string | string[]
+  proposalStatus?: string | string[]
+  // Bloc 2 - Paiement
+  upfrontPaiement?: string | string[]
+  finalPaiement?: string | string[]
+  // Bloc 3 - Documents
+  admissionFolderDocuments?: string
+  documentEvaluation?: string | string[]
+  translation?: string | string[]
+  declarationOfValue?: string | string[]
+  // Bloc 4 - Requirement
+  emailForApplication?: string
+  accountUniversitaly?: string | string[]
+  accountPrenotami?: string | string[]
+  // Bloc 5 - Application
+  applicationUniversity?: string | string[]
+  // Legacy fields (for backward compatibility)
   proposal?: string | string[]
   paymentFirstRate?: string | string[]
-  emailForApplication?: string
-  declarationOfValue?: string | string[]
-  translation?: string | string[]
-  admissionFolderDocuments?: string
   application?: string | string[]
   admissionPayment?: string | string[]
-  applicationUniversity?: string | string[]
   paymentAcceptanceFees?: string | string[]
 }
 
@@ -28,302 +42,285 @@ interface AdmissionDetailsProps {
   admissionData?: AdmissionData
 }
 
-interface StatusOption {
-  value: string
-  label: string
-}
-
-interface AdmissionStep {
+interface BlockData {
   id: string
   title: string
-  type: "multiple-select" | "single-line" | "long-text"
-  options?: StatusOption[]
-  currentValue?: string | string[]
-  placeholder?: string
+  icon: React.ReactNode
+  mainField: string | string[] | undefined
+  fields: Array<{
+    label: string
+    value: string | string[] | undefined
+  }>
+}
+
+// Helper function to format values
+const formatValue = (value: string | string[] | undefined): string => {
+  if (!value) return "—"
+  if (Array.isArray(value)) {
+    return value.filter(v => v && String(v).trim() !== "").join(", ") || "—"
+  }
+  return String(value).trim() || "—"
+}
+
+// Helper function to check if a value is completed
+const isCompleted = (value: string | string[] | undefined): boolean => {
+  const strValue = formatValue(value).toLowerCase()
+  if (!value || strValue === "—") return false
+  return (
+    strValue.includes("accepted") ||
+    strValue.includes("paid") ||
+    strValue.includes("done") ||
+    strValue.includes("completed") ||
+    strValue.includes("signed") ||
+    strValue.includes("exonerated")
+  )
+}
+
+// Helper function to check if a value is in progress
+const isInProgress = (value: string | string[] | undefined): boolean => {
+  const strValue = formatValue(value).toLowerCase()
+  if (!value || strValue === "—") return false
+  return (
+    strValue.includes("in progress") ||
+    strValue.includes("in-progress") ||
+    strValue.includes("in review") ||
+    strValue.includes("in-review") ||
+    strValue.includes("sent") ||
+    strValue.includes("submitted") ||
+    strValue.includes("booked") ||
+    strValue.includes("cimea")
+  )
+}
+
+// Helper function to check if a value has any data
+const hasValue = (value: string | string[] | undefined): boolean => {
+  return value !== undefined && value !== null && formatValue(value) !== "—"
+}
+
+// Helper function to determine status badge
+const getStatusBadge = (value: string | string[] | undefined): { text: string; className: string } => {
+  const strValue = formatValue(value).toLowerCase()
+  
+  if (!value || strValue === "—") {
+    return { text: "Missing", className: "bg-gray-500/20 text-gray-700 dark:text-gray-400" }
+  }
+  
+  // Check for completed/positive statuses
+  if (isCompleted(value)) {
+    return { text: "Completed", className: "bg-green-500/20 text-green-700 dark:text-green-400" }
+  }
+  
+  // Check for in-progress statuses
+  if (isInProgress(value)) {
+    return { text: "In Progress", className: "bg-blue-500/20 text-blue-700 dark:text-blue-400" }
+  }
+  
+  // Check for rejected/negative statuses
+  if (strValue.includes("rejected") || strValue.includes("refused")) {
+    return { text: "Rejected", className: "bg-red-500/20 text-red-700 dark:text-red-400" }
+  }
+  
+  // Check for not started
+  if (strValue.includes("not started") || strValue.includes("not-prepared") || strValue === "no") {
+    return { text: "Not Started", className: "bg-gray-500/20 text-gray-700 dark:text-gray-400" }
+  }
+  
+  // Default: has value but status unclear
+  return { text: "In Progress", className: "bg-blue-500/20 text-blue-700 dark:text-blue-400" }
+}
+
+// Helper function to determine timeline icon color for a block
+const getTimelineIconColor = (block: BlockData): "green" | "yellow" | "red" => {
+  const fieldsWithValues = block.fields.filter(field => hasValue(field.value))
+  const completedFields = block.fields.filter(field => isCompleted(field.value))
+  const inProgressFields = block.fields.filter(field => isInProgress(field.value))
+  
+  // If no fields have values, return red
+  if (fieldsWithValues.length === 0) {
+    return "red"
+  }
+  
+  // If all fields with values are completed, return green
+  if (completedFields.length === fieldsWithValues.length && completedFields.length > 0) {
+    return "green"
+  }
+  
+  // If some fields are completed or in progress, return yellow
+  if (completedFields.length > 0 || inProgressFields.length > 0 || fieldsWithValues.length > 0) {
+    return "yellow"
+  }
+  
+  // Default to red if nothing is done
+  return "red"
 }
 
 export default function AdmissionDetails({ open, onOpenChange, admissionData }: AdmissionDetailsProps) {
-  // Check if a step has a value
-  const hasValue = (step: AdmissionStep): boolean => {
-    if (!step.currentValue) return false
-    if (step.type === "multiple-select") {
-      const values = Array.isArray(step.currentValue) ? step.currentValue : [step.currentValue]
-      return values.length > 0 && values.some(v => v && String(v).trim() !== "")
-    }
-    if (step.type === "single-line" || step.type === "long-text") {
-      return step.currentValue && String(step.currentValue).trim() !== ""
-    }
-    return false
-  }
-  // Normalize Airtable values to match our option values (case-insensitive matching)
-  const normalizeValue = (value: string, options: StatusOption[]): string => {
-    if (!value) return ""
-    const valueLower = value.toLowerCase().trim()
-    const matched = options.find(
-      (opt) => opt.value.toLowerCase() === valueLower || opt.label.toLowerCase() === valueLower
+  if (!admissionData) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Admission Details</DialogTitle>
+            <DialogDescription>Track all steps of your admission process</DialogDescription>
+          </DialogHeader>
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No admission details available at this time.</p>
+          </div>
+        </DialogContent>
+      </Dialog>
     )
-    return matched?.value || value
   }
 
-  // Convert Airtable array or string to array of normalized values
-  const normalizeArrayValue = (value: string | string[] | undefined, options: StatusOption[]): string[] => {
-    if (!value) return []
-    const values = Array.isArray(value) ? value : [value]
-    return values
-      .map((v) => normalizeValue(String(v), options))
-      .filter((v) => v !== "")
-  }
-
-  // Define all options for each field
-  const proposalOptions = [
-    { value: "not-prepared", label: "Not Prepared" },
-    { value: "in-progress", label: "In Progress" },
-    { value: "sent", label: "Sent" },
-    { value: "in-review", label: "In review" },
-    { value: "accepted-signed", label: "Accepted & Signed" },
-  ]
-
-  const paymentFirstRateOptions = [
-    { value: "invoice-sent", label: "Invoice Sent" },
-    { value: "exonerated", label: "Exonerated" },
-    { value: "paid", label: "Paid" },
-  ]
-
-  const declarationValueOptions = [
-    { value: "pronotami-created", label: "Pronotami Account Created" },
-    { value: "cimea-in-progress", label: "Cimea In progress" },
-    { value: "booked", label: "Booked" },
-    { value: "done", label: "Done" },
-  ]
-
-  const translationOptions = [
-    { value: "no", label: "No" },
-    { value: "in-progress", label: "In Progress" },
-    { value: "done", label: "Done" },
-  ]
-
-  const applicationOptions = [
-    { value: "in-progress", label: "In progress" },
-    { value: "accepted", label: "Accepted" },
-    { value: "refused", label: "Refused" },
-  ]
-
-  const admissionPaymentOptions = [
-    { value: "invoice-sent", label: "Invoice sent" },
-    { value: "paid", label: "Paid" },
-  ]
-
-  const paymentAcceptanceFeesOptions = [
-    { value: "invoice-sent", label: "Invoice sent" },
-    { value: "paid", label: "Paid" },
-    { value: "pending", label: "Pending" },
-  ]
-
-  const admissionSteps: AdmissionStep[] = [
+  // Define the 5 blocks
+  const blocks: BlockData[] = [
     {
       id: "proposal",
       title: "Proposal",
-      type: "multiple-select",
-      options: proposalOptions,
-      currentValue: normalizeArrayValue(admissionData?.proposal, proposalOptions),
+      icon: <FileText className="w-6 h-6" />,
+      mainField: admissionData.proposalStatus || admissionData.proposal,
+      fields: [
+        { label: "Proposal Document", value: admissionData.proposalDocument },
+        { label: "Proposal Status", value: admissionData.proposalStatus || admissionData.proposal },
+      ],
     },
     {
-      id: "email-application",
-      title: "Email For Application",
-      type: "single-line",
-      placeholder: "No email provided",
-      currentValue: admissionData?.emailForApplication || "",
+      id: "paiement",
+      title: "Paiement",
+      icon: <CreditCard className="w-6 h-6" />,
+      mainField: admissionData.finalPaiement || admissionData.paymentAcceptanceFees,
+      fields: [
+        { label: "Upfront Paiement", value: admissionData.upfrontPaiement || admissionData.paymentFirstRate },
+        { label: "Acceptance Paiement", value: admissionData.finalPaiement || admissionData.paymentAcceptanceFees },
+      ],
     },
     {
-      id: "payment-first-rate",
-      title: "Payment First Rate Admission",
-      type: "multiple-select",
-      options: paymentFirstRateOptions,
-      currentValue: normalizeArrayValue(admissionData?.paymentFirstRate, paymentFirstRateOptions),
+      id: "documents",
+      title: "Documents",
+      icon: <FolderOpen className="w-6 h-6" />,
+      mainField: admissionData.documentEvaluation,
+      fields: [
+        { label: "Content of folder", value: admissionData.admissionFolderDocuments },
+        { label: "Evaluation of folder", value: admissionData.documentEvaluation },
+        { label: "Translation status", value: admissionData.translation },
+        { label: "Declaration of value", value: admissionData.declarationOfValue },
+      ],
     },
     {
-      id: "application-university",
-      title: "Application University",
-      type: "single-line",
-      placeholder: "No university specified",
-      currentValue: admissionData?.applicationUniversity 
-        ? (Array.isArray(admissionData.applicationUniversity) 
-          ? admissionData.applicationUniversity.join(", ") 
-          : String(admissionData.applicationUniversity))
-        : "",
-    },
-    {
-      id: "payment-acceptance-fees",
-      title: "Payment Acceptance Fees",
-      type: "multiple-select",
-      options: paymentAcceptanceFeesOptions,
-      currentValue: normalizeArrayValue(admissionData?.paymentAcceptanceFees, paymentAcceptanceFeesOptions),
-    },
-    {
-      id: "declaration-value",
-      title: "Declaration of Value",
-      type: "multiple-select",
-      options: declarationValueOptions,
-      currentValue: normalizeArrayValue(admissionData?.declarationOfValue, declarationValueOptions),
-    },
-    {
-      id: "translation",
-      title: "Translation",
-      type: "multiple-select",
-      options: translationOptions,
-      currentValue: normalizeArrayValue(admissionData?.translation, translationOptions),
-    },
-    {
-      id: "admission-folder-documents",
-      title: "Admission Folder Documents",
-      type: "long-text",
-      placeholder: "No document details provided",
-      currentValue: admissionData?.admissionFolderDocuments || "",
+      id: "requirements",
+      title: "Requirements",
+      icon: <CheckCircle className="w-6 h-6" />,
+      mainField: admissionData.accountUniversitaly || admissionData.accountPrenotami,
+      fields: [
+        { label: "Email for application", value: admissionData.emailForApplication },
+        { label: "Account Universitaly", value: admissionData.accountUniversitaly },
+        { label: "Account Prenotami", value: admissionData.accountPrenotami },
+      ],
     },
     {
       id: "application",
       title: "Application",
-      type: "multiple-select",
-      options: applicationOptions,
-      currentValue: normalizeArrayValue(admissionData?.application, applicationOptions),
-    },
-    {
-      id: "admission-payment",
-      title: "Admission Payment",
-      type: "multiple-select",
-      options: admissionPaymentOptions,
-      currentValue: normalizeArrayValue(admissionData?.admissionPayment, admissionPaymentOptions),
+      icon: <GraduationCap className="w-6 h-6" />,
+      mainField: admissionData.applicationUniversity || admissionData.application,
+      fields: [
+        { label: "Application status", value: admissionData.applicationUniversity || admissionData.application },
+      ],
     },
   ]
 
-  const getStatusBadgeColor = (step: AdmissionStep) => {
-    if (step.type === "multiple-select" && step.currentValue) {
-      const values = Array.isArray(step.currentValue) ? step.currentValue : [step.currentValue]
-      const valuesLower = values.map(v => String(v).toLowerCase())
-      
-      // Check for positive/completed statuses
-      if (
-        valuesLower.some(v => 
-          v.includes("done") || 
-          v.includes("accepted") || 
-          v.includes("paid") || 
-          v.includes("exonerated") ||
-          v.includes("signed") ||
-          v.includes("completed")
-        )
-      ) {
-        return "bg-green-500/20 text-green-700 dark:text-green-400"
-      }
-      
-      // Check for negative/refused statuses
-      if (valuesLower.some(v => v.includes("refused") || v.includes("rejected"))) {
-        return "bg-red-500/20 text-red-700 dark:text-red-400"
-      }
-      
-      // Check for in-progress statuses
-      if (
-        valuesLower.some(v => 
-          v.includes("in-progress") || 
-          v.includes("in progress") ||
-          v.includes("in-review") ||
-          v.includes("in review") ||
-          v.includes("sent") ||
-          v.includes("booked") ||
-          v.includes("cimea")
-        )
-      ) {
-        return "bg-blue-500/20 text-blue-700 dark:text-blue-400"
-      }
-      
-      // Check for not started/not prepared
-      if (valuesLower.some(v => v.includes("not-prepared") || v.includes("not prepared") || v === "no")) {
-        return "bg-gray-500/20 text-gray-700 dark:text-gray-400"
+  // Determine current step for timeline
+  const getCurrentStep = (): number => {
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i]
+      const status = getStatusBadge(block.mainField)
+      if (status.text === "Completed" || status.text === "In Progress") {
+        return i
       }
     }
-    return "bg-muted text-muted-foreground"
+    return 0
   }
 
-  const formatCurrentValue = (step: AdmissionStep) => {
-    if (step.type === "multiple-select" && step.currentValue) {
-      const values = Array.isArray(step.currentValue) ? step.currentValue : [step.currentValue]
-      if (values.length === 0) return "—"
-      
-      return values
-        .map((val) => {
-          // Try exact match first
-          const option = step.options?.find((opt) => opt.value === val || opt.value.toLowerCase() === String(val).toLowerCase())
-          if (option) return option.label
-          
-          // Try label match
-          const labelMatch = step.options?.find((opt) => opt.label.toLowerCase() === String(val).toLowerCase())
-          if (labelMatch) return labelMatch.label
-          
-          // Return the actual value if no match found (for Airtable raw values)
-          return String(val)
-        })
-        .join(", ")
-    }
-    if (step.type === "single-line") {
-      return step.currentValue || step.placeholder || "—"
-    }
-    if (step.type === "long-text") {
-      return step.currentValue || step.placeholder || "No details provided"
-    }
-    return "—"
-  }
+  const currentStep = getCurrentStep()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">Admission Details</DialogTitle>
           <DialogDescription>Track all steps of your admission process</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
-          {admissionSteps
-            .filter((step) => hasValue(step))
-            .map((step, index) => (
-              <Card key={step.id} className="p-4 border-2">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0">
-                        {index + 1}
-                      </span>
-                      <h3 className="font-semibold text-foreground">{step.title}</h3>
-                    </div>
-
-                    <div className="ml-11">
-                      {step.type === "multiple-select" && (
-                        <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(step)}`}>
-                          {formatCurrentValue(step)}
-                        </span>
-                      )}
-
-                      {step.type === "single-line" && (
-                        <p className="text-sm text-foreground bg-muted/50 p-2 rounded border">
-                          {formatCurrentValue(step)}
-                        </p>
-                      )}
-
-                      {step.type === "long-text" && (
-                        <p className="text-sm text-foreground bg-muted/50 p-3 rounded border whitespace-pre-wrap min-h-[60px]">
-                          {formatCurrentValue(step)}
-                        </p>
-                      )}
-                    </div>
+        {/* Timeline Bar */}
+        <div className="mt-6 mb-8">
+          <div className="flex items-center justify-between relative">
+            {/* Progress line */}
+            <div className="absolute top-5 left-0 right-0 h-0.5 bg-border" />
+            <div
+              className="absolute top-5 left-0 h-0.5 bg-primary transition-all duration-300"
+              style={{ width: `${(currentStep / (blocks.length - 1)) * 100}%` }}
+            />
+            
+            {/* Step indicators */}
+            {blocks.map((block, index) => {
+              const iconColor = getTimelineIconColor(block)
+              const colorClasses = {
+                green: "bg-green-500 border-green-500 text-white",
+                yellow: "bg-yellow-500 border-yellow-500 text-white",
+                red: "bg-red-500 border-red-500 text-white",
+              }
+              return (
+                <div key={block.id} className="relative z-10 flex flex-col items-center">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${colorClasses[iconColor]}`}
+                  >
+                    {block.icon}
                   </div>
+                  <span className="mt-2 text-xs font-medium text-center max-w-[80px]">
+                    {block.title}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Blocks Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          {blocks.map((block) => {
+            const status = getStatusBadge(block.mainField)
+            return (
+              <Card key={block.id} className="p-6 border-2 hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                    {block.icon}
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">{block.title}</h3>
+                </div>
+
+                {/* Status Badge */}
+                <div className="mb-4">
+                  <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${status.className}`}>
+                    {status.text}
+                  </span>
+                </div>
+
+                {/* Fields */}
+                <div className="space-y-2">
+                  {block.fields.map((field, index) => {
+                    const fieldValue = formatValue(field.value)
+                    return (
+                      <div key={index} className="text-sm">
+                        <span className="font-medium text-muted-foreground">{field.label}:</span>{" "}
+                        <span className={fieldValue === "—" ? "text-muted-foreground italic" : "text-foreground"}>
+                          {fieldValue}
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
               </Card>
-            ))}
+            )
+          })}
         </div>
-        
-        {admissionSteps.filter((step) => hasValue(step)).length === 0 && (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">No admission details available at this time.</p>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   )

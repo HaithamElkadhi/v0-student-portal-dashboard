@@ -8,15 +8,28 @@ import { Input } from "@/components/ui/input"
 import { ArrowLeft } from "lucide-react"
 
 interface AdmissionData {
+  // Bloc 1 - Proposal
+  proposalDocument?: string | string[]
+  proposalStatus?: string | string[]
+  // Bloc 2 - Paiement
+  upfrontPaiement?: string | string[]
+  finalPaiement?: string | string[]
+  // Bloc 3 - Documents
+  admissionFolderDocuments?: string
+  documentEvaluation?: string | string[]
+  translation?: string | string[]
+  declarationOfValue?: string | string[]
+  // Bloc 4 - Requirement
+  emailForApplication?: string
+  accountUniversitaly?: string | string[]
+  accountPrenotami?: string | string[]
+  // Bloc 5 - Application
+  applicationUniversity?: string | string[]
+  // Legacy fields (for backward compatibility)
   proposal?: string | string[]
   paymentFirstRate?: string | string[]
-  emailForApplication?: string
-  declarationOfValue?: string | string[]
-  translation?: string | string[]
-  admissionFolderDocuments?: string
   application?: string | string[]
   admissionPayment?: string | string[]
-  applicationUniversity?: string | string[]
   paymentAcceptanceFees?: string | string[]
 }
 

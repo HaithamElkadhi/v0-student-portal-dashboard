@@ -194,15 +194,28 @@ export async function POST(request: NextRequest) {
       photo: fields["Photo"] || fields["photo"] || fields["Profile Photo"] || fields["profile photo"] || null,
       // Admission fields
       admission: {
+        // Bloc 1 - Proposal
+        proposalDocument: getFieldValue(["Proposal_Document", "Proposal Document", "proposal document", "Proposal_Document", "proposal_document"]),
+        proposalStatus: getFieldValue(["Proposal_Status", "Proposal Status", "proposal status", "proposal_status", "Proposal", "proposal"]),
+        // Bloc 2 - Paiement
+        upfrontPaiement: getFieldValue(["UpFront_Paiement", "UpFront Paiement", "upfront paiement", "Upfront Paiement", "Upfront_Paiement", "Payment First Rate Admission", "payment first rate admission", "Payment First Rate", "payment first rate"]),
+        finalPaiement: getFieldValue(["Final_Paiement", "Final Paiement", "final paiement", "final_paiement", "Payment Acceptance Fees", "payment acceptance fees", "Paiement Acceptance Fees", "paiement acceptance fees", "Acceptance Fees Payment", "acceptance fees payment"]),
+        // Bloc 3 - Documents
+        admissionFolderDocuments: getFieldValue(["Admission Folder Documents", "admission folder documents", "Admission Folder documents", "Admission Documents", "admission documents", "Folder Documents", "folder documents"]),
+        documentEvaluation: getFieldValue(["Document_Evaluation", "Document Evaluation", "document evaluation", "document_evaluation"]),
+        translation: getFieldValue(["Translation", "translation"]),
+        declarationOfValue: getFieldValue(["Declaration of value", "Declaration of Value", "declaration of value", "Declaration", "declaration"]),
+        // Bloc 4 - Requirement
+        emailForApplication: getFieldValue(["Email For application", "Email For Application", "email for application", "Email for application", "Application Email", "application email", "Email Application", "email application"]),
+        accountUniversitaly: getFieldValue(["Account_Universitaly", "Account Universitaly", "account universitaly", "account_universitaly", "Universitaly Account", "universitaly account"]),
+        accountPrenotami: getFieldValue(["Account Pronotami", "Account_Pronotami", "account pronotami", "account_pronotami", "Pronotami Account", "pronotami account", "Account Prenotami", "account prenotami"]),
+        // Bloc 5 - Application
+        applicationUniversity: getFieldValue(["Application University", "application university", "University", "university", "University Application", "university application"]),
+        // Legacy fields (keeping for backward compatibility)
         proposal: getFieldValue(["Proposal", "proposal"]),
         paymentFirstRate: getFieldValue(["Payment First Rate Admission", "payment first rate admission", "Payment First Rate", "payment first rate", "Paiement First Rate Admission", "paiement first rate admission"]),
-        emailForApplication: getFieldValue(["Email For application", "Email For Application", "email for application", "Email for application", "Application Email", "application email", "Email Application", "email application"]),
-        declarationOfValue: getFieldValue(["Declaration of Value", "declaration of value", "Declaration", "declaration"]),
-        translation: getFieldValue(["Translation", "translation"]),
-        admissionFolderDocuments: getFieldValue(["Admission Folder Documents", "admission folder documents", "Admission Documents", "admission documents", "Folder Documents", "folder documents"]),
         application: getFieldValue(["Application", "application", "Application Status", "application status"]),
         admissionPayment: getFieldValue(["Admission Payment", "admission payment", "Admission Paiement", "admission paiement"]),
-        applicationUniversity: getFieldValue(["Application University", "application university", "University", "university", "University Application", "university application"]),
         paymentAcceptanceFees: getFieldValue(["Payment Acceptance Fees", "payment acceptance fees", "Paiement Acceptance Fees", "paiement acceptance fees", "Acceptance Fees Payment", "acceptance fees payment"]),
       },
     }
