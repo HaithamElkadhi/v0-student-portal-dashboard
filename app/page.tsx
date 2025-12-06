@@ -33,6 +33,7 @@ export default function Page() {
       applicationUniversity?: string | string[]
       paymentAcceptanceFees?: string | string[]
     }
+    accountStatus?: string
   } | null>(null)
 
   const handleStudentClick = () => {
@@ -66,6 +67,7 @@ export default function Page() {
       applicationUniversity?: string | string[]
       paymentAcceptanceFees?: string | string[]
     }
+    accountStatus?: string
   }) => {
     setStudentInfo(info)
     setCurrentPage("student-dashboard")
@@ -75,6 +77,37 @@ export default function Page() {
     setCurrentPage("login-selection")
     setUserRole(null)
     setStudentInfo(null)
+  }
+
+  const handleRefresh = (updatedInfo: {
+    name: string
+    email: string
+    folderId: string
+    surname?: string
+    gender?: string
+    phone?: string
+    whatsapp?: string
+    birthday?: string
+    citizenship?: string
+    countryOfResidence?: string
+    fullAddress?: string
+    passportValidity?: string
+    photo?: any
+    admission?: {
+      proposal?: string | string[]
+      paymentFirstRate?: string | string[]
+      emailForApplication?: string
+      declarationOfValue?: string | string[]
+      translation?: string | string[]
+      admissionFolderDocuments?: string
+      application?: string | string[]
+      admissionPayment?: string | string[]
+      applicationUniversity?: string | string[]
+      paymentAcceptanceFees?: string | string[]
+    }
+    accountStatus?: string
+  }) => {
+    setStudentInfo(updatedInfo)
   }
 
   return (
@@ -96,7 +129,7 @@ export default function Page() {
         </div>
       )}
       {currentPage === "student-dashboard" && userRole === "student" && studentInfo && (
-        <StudentDashboard onLogout={handleLogout} studentInfo={studentInfo} />
+        <StudentDashboard onLogout={handleLogout} studentInfo={studentInfo} onRefresh={handleRefresh} />
       )}
     </main>
   )

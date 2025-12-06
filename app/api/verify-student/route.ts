@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
 
     const studentInfo = {
       id: record.id,
-      name: getFieldValue(["Name", "Full Name", "First Name", "name", "full name", "first name"]),
+      name: getFieldValue(["Name", "name"]),
       surname: getFieldValue(["Surname", "Last Name", "surname", "last name", "Last Name", "Family Name"]),
       email: getFieldValue(["Email", "email", "Email Address", "email address"]) || email || "",
       folderId: getFieldValue(["Prospect ID", "prospect id", "Folder ID", "folder id", "ProspectID", "FolderID"]) || folderId || "",
@@ -169,8 +169,28 @@ export async function POST(request: NextRequest) {
       citizenship: getFieldValue(["Citizenship", "citizenship", "Nationality", "nationality"]),
       countryOfResidence: getFieldValue(["Country of Residence", "country of residence", "Residence Country", "residence country", "Country", "country"]),
       fullAddress: getFieldValue(["Full Address", "full address", "Address", "address", "Complete Address", "complete address"]),
-      passportValidity: getFieldValue(["Passport Validity", "passport validity", "Passport Expiry", "passport expiry", "Passport Expiration", "passport expiration"]),
+      passportValidity: getFieldValue(["Passport Validity (months)", "Passport Validity (Months)", "passport validity (months)", "Passport Validity", "passport validity", "Passport Expiry", "passport expiry", "Passport Expiration", "passport expiration"]),
       gender: getFieldValue(["Gender", "gender", "Sex", "sex"]),
+      accountStatus: (() => {
+        // Use exact field name "Account Status"
+        if (fields["Account Status"] !== undefined && fields["Account Status"] !== null && fields["Account Status"] !== "") {
+          return fields["Account Status"]
+        }
+        // Try case-insensitive match for "Account Status" only
+        const fieldKeys = Object.keys(fields)
+        const accountStatusField = fieldKeys.find(
+          key => key.toLowerCase() === "account status"
+        )
+        if (accountStatusField && fields[accountStatusField] !== undefined && fields[accountStatusField] !== null && fields[accountStatusField] !== "") {
+          return fields[accountStatusField]
+        }
+        // Log for debugging
+        console.log("Account Status field lookup:", {
+          "Account Status": fields["Account Status"],
+          allFields: Object.keys(fields)
+        })
+        return ""
+      })(),
       photo: fields["Photo"] || fields["photo"] || fields["Profile Photo"] || fields["profile photo"] || null,
       // Admission fields
       admission: {

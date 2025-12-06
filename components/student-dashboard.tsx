@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card"
 import StatusCard from "@/components/status-card"
 import AdmissionDetails from "@/components/admission-details"
 import ViewApplications from "@/components/view-applications"
-import { LogOut, Mail, FolderOpen, User, Phone, MessageCircle, Calendar, Globe, MapPin, FileText, Shield, CheckCircle2, Flag } from "lucide-react"
+import { LogOut, Mail, FolderOpen, User, Phone, MessageCircle, Calendar, Globe, MapPin, FileText, Shield, CheckCircle2, Flag, RefreshCw } from "lucide-react"
 
 interface AdmissionData {
   proposal?: string | string[]
@@ -36,16 +36,19 @@ interface StudentInfo {
   passportValidity?: string
   photo?: any
   admission?: AdmissionData
+  accountStatus?: string
 }
 
 interface StudentDashboardProps {
   onLogout: () => void
   studentInfo: StudentInfo
+  onRefresh: (updatedInfo: StudentInfo) => void
 }
 
-export default function StudentDashboard({ onLogout, studentInfo }: StudentDashboardProps) {
+export default function StudentDashboard({ onLogout, studentInfo, onRefresh }: StudentDashboardProps) {
   const [admissionModalOpen, setAdmissionModalOpen] = useState(false)
   const [applicationsModalOpen, setApplicationsModalOpen] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Calculate admission percentage based on completion status
   const calculateAdmissionPercentage = (admissionData?: AdmissionData): number => {
@@ -116,6 +119,95 @@ export default function StudentDashboard({ onLogout, studentInfo }: StudentDashb
 
   const admissionPercentage = calculateAdmissionPercentage(studentInfo.admission)
   const admissionStatus = getAdmissionStatus(studentInfo.admission)
+
+  // Get status color classes based on account status
+  const getStatusColors = (status?: string) => {
+    if (!status) {
+      return {
+        bg: "bg-muted/50",
+        icon: "text-muted-foreground",
+        badgeBg: "bg-muted/20",
+        badgeText: "text-muted-foreground"
+      }
+    }
+    const statusLower = status.toLowerCase()
+    if (statusLower === "active") {
+      return {
+        bg: "bg-green-500/10",
+        icon: "text-green-600 dark:text-green-400",
+        badgeBg: "bg-green-500/20",
+        badgeText: "text-green-700 dark:text-green-400"
+      }
+    } else if (statusLower === "inactive") {
+      return {
+        bg: "bg-red-500/10",
+        icon: "text-red-600 dark:text-red-400",
+        badgeBg: "bg-red-500/20",
+        badgeText: "text-red-700 dark:text-red-400"
+      }
+    } else if (statusLower === "suspended") {
+      return {
+        bg: "bg-yellow-500/10",
+        icon: "text-yellow-600 dark:text-yellow-400",
+        badgeBg: "bg-yellow-500/20",
+        badgeText: "text-yellow-700 dark:text-yellow-400"
+      }
+    }
+    // Default fallback
+    return {
+      bg: "bg-muted/50",
+      icon: "text-muted-foreground",
+      badgeBg: "bg-muted/20",
+      badgeText: "text-muted-foreground"
+    }
+  }
+
+  const statusColors = getStatusColors(studentInfo.accountStatus)
+  const displayStatus = studentInfo.accountStatus || "—"
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      const response = await fetch("/api/verify-student", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: studentInfo.email,
+          folderId: studentInfo.folderId,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success && data.student) {
+        const student = data.student
+        onRefresh({
+          name: student.name || "Student",
+          email: student.email,
+          folderId: student.folderId,
+          surname: student.surname,
+          gender: student.gender,
+          phone: student.phone,
+          whatsapp: student.whatsapp,
+          birthday: student.birthday,
+          citizenship: student.citizenship,
+          countryOfResidence: student.countryOfResidence,
+          fullAddress: student.fullAddress,
+          passportValidity: student.passportValidity,
+          photo: student.photo,
+          admission: student.admission,
+          accountStatus: student.accountStatus,
+        })
+      }
+    } catch (error) {
+      console.error("Refresh error:", error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -126,10 +218,22 @@ export default function StudentDashboard({ onLogout, studentInfo }: StudentDashb
               <h1 className="text-2xl font-bold text-primary">JEEXPERT</h1>
               <p className="text-sm text-muted-foreground">Student Portal</p>
             </div>
-            <Button variant="outline" size="sm" onClick={onLogout} className="gap-2 bg-transparent">
-              <LogOut className="w-4 h-4" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleRefresh} 
+                disabled={isRefreshing}
+                className="gap-2 bg-transparent"
+              >
+                <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+              <Button variant="outline" size="sm" onClick={onLogout} className="gap-2 bg-transparent">
+                <LogOut className="w-4 h-4" />
+                Logout
+              </Button>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50">
@@ -138,11 +242,11 @@ export default function StudentDashboard({ onLogout, studentInfo }: StudentDashb
               <span className="text-sm font-bold text-primary font-mono">{studentInfo.folderId || "—"}</span>
             </div>
 
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/10">
-              <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${statusColors.bg}`}>
+              <CheckCircle2 className={`w-4 h-4 ${statusColors.icon}`} />
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status:</span>
-              <span className="px-2 py-1 rounded-full bg-green-500/20 text-green-700 dark:text-green-400 text-xs font-bold">
-                Active
+              <span className={`px-2 py-1 rounded-full ${statusColors.badgeBg} ${statusColors.badgeText} text-xs font-bold`}>
+                {displayStatus}
               </span>
             </div>
           </div>
@@ -263,11 +367,11 @@ export default function StudentDashboard({ onLogout, studentInfo }: StudentDashb
               <div className="space-y-2 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                   <FileText className="w-3.5 h-3.5" />
-                  Passport Validity
+                  Passport Validity (in Months)
                 </label>
                 <p className="text-base font-medium text-foreground">
                   {studentInfo.passportValidity
-                    ? new Date(studentInfo.passportValidity).toLocaleDateString()
+                    ? `${studentInfo.passportValidity} months`
                     : "—"}
                 </p>
               </div>
@@ -362,59 +466,7 @@ export default function StudentDashboard({ onLogout, studentInfo }: StudentDashb
           onOpenChange={setApplicationsModalOpen}
           prospectId={studentInfo.folderId}
         />
-
-        {/* Recent Activity */}
-        <Card className="border-2 p-6">
-          <h3 className="text-xl font-bold text-foreground mb-6">Recent Activity</h3>
-          <div className="space-y-4">
-            <ActivityItem
-              date="Dec 3, 2024"
-              title="Admission documents reviewed"
-              description="Your application has been reviewed by the admissions team"
-              status="completed"
-            />
-            <ActivityItem
-              date="Nov 28, 2024"
-              title="Documents submitted"
-              description="You have successfully submitted all required documents"
-              status="completed"
-            />
-            <ActivityItem
-              date="Nov 20, 2024"
-              title="Application created"
-              description="Your JEEXPERT application has been created"
-              status="completed"
-            />
-          </div>
-        </Card>
       </main>
-    </div>
-  )
-}
-
-function ActivityItem({
-  date,
-  title,
-  description,
-  status,
-}: {
-  date: string
-  title: string
-  description: string
-  status: "completed" | "pending"
-}) {
-  return (
-    <div className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0">
-      <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${status === "completed" ? "bg-accent" : "bg-muted"}`} />
-      <div className="flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="font-medium text-foreground">{title}</p>
-            <p className="text-sm text-muted-foreground">{description}</p>
-          </div>
-          <span className="text-xs text-muted-foreground whitespace-nowrap">{date}</span>
-        </div>
-      </div>
     </div>
   )
 }

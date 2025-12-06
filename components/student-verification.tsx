@@ -36,6 +36,7 @@ interface StudentVerificationProps {
     passportValidity?: string
     photo?: any
     admission?: AdmissionData
+    accountStatus?: string
   }) => void
   onBack: () => void
 }
@@ -93,12 +94,9 @@ export default function StudentVerification({ onSuccess, onBack }: StudentVerifi
       if (data.success && data.student) {
         // Use the student data from Airtable
         const student = data.student
-        const fullName = student.name
-          ? `${student.name}${student.surname ? ` ${student.surname}` : ""}`
-          : student.surname || "Student"
         
         onSuccess({
-          name: fullName,
+          name: student.name || "Student",
           email: student.email,
           folderId: student.folderId,
           surname: student.surname,
@@ -112,6 +110,7 @@ export default function StudentVerification({ onSuccess, onBack }: StudentVerifi
           passportValidity: student.passportValidity,
           photo: student.photo,
           admission: student.admission,
+          accountStatus: student.accountStatus,
         })
       } else {
         setError("Student not found. Please check your credentials.")
