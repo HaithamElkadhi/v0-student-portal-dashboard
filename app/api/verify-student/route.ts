@@ -157,6 +157,48 @@ export async function POST(request: NextRequest) {
       return ""
     }
 
+    // Helper function to extract file attachments from Airtable
+    const getFileAttachments = (possibleNames: string[]) => {
+      for (const name of possibleNames) {
+        if (fields[name] !== undefined && fields[name] !== null) {
+          // Airtable file attachments are arrays of objects
+          if (Array.isArray(fields[name]) && fields[name].length > 0) {
+            // Check if it's a file attachment (has url property)
+            if (fields[name][0] && typeof fields[name][0] === 'object' && 'url' in fields[name][0]) {
+              return fields[name].map((file: any) => ({
+                id: file.id,
+                url: file.url,
+                filename: file.filename || 'Unknown file',
+                size: file.size || 0,
+                type: file.type || 'application/octet-stream'
+              }))
+            }
+          }
+        }
+      }
+      // Try case-insensitive matching
+      const fieldKeys = Object.keys(fields)
+      for (const possibleName of possibleNames) {
+        const matchedKey = fieldKeys.find(
+          key => key.toLowerCase() === possibleName.toLowerCase()
+        )
+        if (matchedKey && fields[matchedKey] !== undefined && fields[matchedKey] !== null) {
+          if (Array.isArray(fields[matchedKey]) && fields[matchedKey].length > 0) {
+            if (fields[matchedKey][0] && typeof fields[matchedKey][0] === 'object' && 'url' in fields[matchedKey][0]) {
+              return fields[matchedKey].map((file: any) => ({
+                id: file.id,
+                url: file.url,
+                filename: file.filename || 'Unknown file',
+                size: file.size || 0,
+                type: file.type || 'application/octet-stream'
+              }))
+            }
+          }
+        }
+      }
+      return null
+    }
+
     const studentInfo = {
       id: record.id,
       name: getFieldValue(["Name", "name"]),
@@ -195,7 +237,7 @@ export async function POST(request: NextRequest) {
       // Admission fields
       admission: {
         // Bloc 1 - Proposal
-        proposalDocument: getFieldValue(["Proposal_Document", "Proposal Document", "proposal document", "Proposal_Document", "proposal_document"]),
+        proposalDocument: getFileAttachments(["Proposal_Document", "Proposal Document", "proposal document", "Proposal_Document", "proposal_document"]) || getFieldValue(["Proposal_Document", "Proposal Document", "proposal document", "Proposal_Document", "proposal_document"]),
         proposalStatus: getFieldValue(["Proposal_Status", "Proposal Status", "proposal status", "proposal_status", "Proposal", "proposal"]),
         // Bloc 2 - Paiement
         upfrontPaiement: getFieldValue(["UpFront_Paiement", "UpFront Paiement", "upfront paiement", "Upfront Paiement", "Upfront_Paiement", "Payment First Rate Admission", "payment first rate admission", "Payment First Rate", "payment first rate"]),
@@ -206,7 +248,14 @@ export async function POST(request: NextRequest) {
         translation: getFieldValue(["Translation", "translation"]),
         declarationOfValue: getFieldValue(["Declaration of value", "Declaration of Value", "declaration of value", "Declaration", "declaration"]),
         // Bloc 4 - Requirement
-        emailForApplication: getFieldValue(["Email For application", "Email For Application", "email for application", "Email for application", "Application Email", "application email", "Email Application", "email application"]),
+        emailForApplication: (() => {
+          // Use exact field name "Email For application" from Airtable Prospects table
+          if (fields["Email For application"] !== undefined && fields["Email For application"] !== null && fields["Email For application"] !== "") {
+            return fields["Email For application"]
+          }
+          // Fallback to other variations
+          return getFieldValue(["Email For Application", "email for application", "Email for application", "Application Email", "application email", "Email Application", "email application"])
+        })(),
         accountUniversitaly: getFieldValue(["Account_Universitaly", "Account Universitaly", "account universitaly", "account_universitaly", "Universitaly Account", "universitaly account"]),
         accountPrenotami: getFieldValue(["Account Pronotami", "Account_Pronotami", "account pronotami", "account_pronotami", "Pronotami Account", "pronotami account", "Account Prenotami", "account prenotami"]),
         // Bloc 5 - Application

@@ -8,9 +8,17 @@ import AdmissionDetails from "@/components/admission-details"
 import ViewApplications from "@/components/view-applications"
 import { LogOut, Mail, FolderOpen, User, Phone, MessageCircle, Calendar, Globe, MapPin, FileText, Shield, CheckCircle2, Flag, RefreshCw } from "lucide-react"
 
+interface FileAttachment {
+  id: string
+  url: string
+  filename: string
+  size?: number
+  type?: string
+}
+
 interface AdmissionData {
   // Bloc 1 - Proposal
-  proposalDocument?: string | string[]
+  proposalDocument?: string | string[] | FileAttachment[]
   proposalStatus?: string | string[]
   // Bloc 2 - Paiement
   upfrontPaiement?: string | string[]

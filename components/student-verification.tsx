@@ -7,9 +7,17 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { ArrowLeft } from "lucide-react"
 
+interface FileAttachment {
+  id: string
+  url: string
+  filename: string
+  size?: number
+  type?: string
+}
+
 interface AdmissionData {
   // Bloc 1 - Proposal
-  proposalDocument?: string | string[]
+  proposalDocument?: string | string[] | FileAttachment[]
   proposalStatus?: string | string[]
   // Bloc 2 - Paiement
   upfrontPaiement?: string | string[]

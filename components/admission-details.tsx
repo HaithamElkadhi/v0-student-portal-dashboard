@@ -10,9 +10,17 @@ import {
 import { Card } from "@/components/ui/card"
 import { FileText, CreditCard, FolderOpen, CheckCircle, GraduationCap } from "lucide-react"
 
+interface FileAttachment {
+  id: string
+  url: string
+  filename: string
+  size?: number
+  type?: string
+}
+
 interface AdmissionData {
   // Bloc 1 - Proposal
-  proposalDocument?: string | string[]
+  proposalDocument?: string | string[] | FileAttachment[]
   proposalStatus?: string | string[]
   // Bloc 2 - Paiement
   upfrontPaiement?: string | string[]
@@ -53,9 +61,17 @@ interface BlockData {
   }>
 }
 
+// Helper function to check if value is file attachment
+const isFileAttachment = (value: any): value is FileAttachment[] => {
+  return Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && 'url' in value[0] && 'filename' in value[0]
+}
+
 // Helper function to format values
-const formatValue = (value: string | string[] | undefined): string => {
+const formatValue = (value: string | string[] | FileAttachment[] | undefined): string => {
   if (!value) return "—"
+  if (isFileAttachment(value)) {
+    return value.map(file => file.filename).join(", ") || "—"
+  }
   if (Array.isArray(value)) {
     return value.filter(v => v && String(v).trim() !== "").join(", ") || "—"
   }
@@ -307,12 +323,32 @@ export default function AdmissionDetails({ open, onOpenChange, admissionData }: 
                 <div className="space-y-2">
                   {block.fields.map((field, index) => {
                     const fieldValue = formatValue(field.value)
+                    const isFileField = field.label === "Proposal Document" && isFileAttachment(field.value)
+                    
                     return (
                       <div key={index} className="text-sm">
                         <span className="font-medium text-muted-foreground">{field.label}:</span>{" "}
-                        <span className={fieldValue === "—" ? "text-muted-foreground italic" : "text-foreground"}>
-                          {fieldValue}
-                        </span>
+                        {isFileField && field.value ? (
+                          <div className="mt-1 space-y-1">
+                            {(field.value as FileAttachment[]).map((file, fileIndex) => (
+                              <a
+                                key={file.id || fileIndex}
+                                href={file.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download={file.filename}
+                                className="inline-flex items-center gap-2 text-primary hover:text-primary/80 underline cursor-pointer transition-colors"
+                              >
+                                <FileText className="w-4 h-4" />
+                                <span>{file.filename}</span>
+                              </a>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className={fieldValue === "—" ? "text-muted-foreground italic" : "text-foreground"}>
+                            {fieldValue}
+                          </span>
+                        )}
                       </div>
                     )
                   })}
