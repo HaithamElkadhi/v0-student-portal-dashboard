@@ -178,6 +178,13 @@ function LoginSelection({ onStudentClick }: { onStudentClick: () => void }) {
   return (
     <div className="w-full max-w-2xl">
       <div className="mb-12 text-center">
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <img 
+            src="/Jeexpert Logo base.png" 
+            alt="JEEXPERT Logo" 
+            className="h-16 w-auto"
+          />
+        </div>
         <h1 className="text-4xl font-bold text-primary mb-2">JEEXPERT</h1>
         <p className="text-lg text-muted-foreground">Student Portal</p>
       </div>

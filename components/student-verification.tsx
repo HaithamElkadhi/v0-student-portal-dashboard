@@ -150,6 +150,13 @@ export default function StudentVerification({ onSuccess, onBack }: StudentVerifi
 
           <Card className="p-8 border-2">
             <div className="mb-8">
+              <div className="flex items-center justify-center mb-4">
+                <img 
+                  src="/Jeexpert Logo base.png" 
+                  alt="JEEXPERT Logo" 
+                  className="h-12 w-auto"
+                />
+              </div>
               <h2 className="text-2xl font-bold text-foreground mb-2">Student Verification</h2>
               <p className="text-sm text-muted-foreground">Choose how you'd like to verify your identity</p>
             </div>
@@ -199,6 +206,13 @@ export default function StudentVerification({ onSuccess, onBack }: StudentVerifi
 
           <Card className="p-8 border-2">
             <div className="mb-8">
+              <div className="flex items-center justify-center mb-4">
+                <img 
+                  src="/Jeexpert Logo base.png" 
+                  alt="JEEXPERT Logo" 
+                  className="h-12 w-auto"
+                />
+              </div>
               <h2 className="text-2xl font-bold text-foreground mb-2">
                 {loginMethod === "email" ? "Email Verification" : "Folder ID Verification"}
               </h2>

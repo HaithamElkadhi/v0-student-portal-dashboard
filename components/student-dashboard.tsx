@@ -227,9 +227,16 @@ export default function StudentDashboard({ onLogout, studentInfo, onRefresh }: S
       <header className="border-b border-border bg-card sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-primary">JEEXPERT</h1>
-              <p className="text-sm text-muted-foreground">Student Portal</p>
+            <div className="flex items-center gap-3">
+              <img 
+                src="/Jeexpert Logo base.png" 
+                alt="JEEXPERT Logo" 
+                className="h-10 w-auto"
+              />
+              <div>
+                <h1 className="text-2xl font-bold text-primary">JEEXPERT</h1>
+                <p className="text-sm text-muted-foreground">Student Portal</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Button 
