@@ -24,6 +24,8 @@ interface Application {
   degreeLevel: string
   campusCity: string
   dateOfCandidacy: string
+  applicationStatus?: string
+  comment?: string
 }
 
 interface ViewApplicationsProps {
@@ -92,6 +94,16 @@ export default function ViewApplications({ open, onOpenChange, prospectId }: Vie
     }
   }
 
+  const getStatusStyle = (status: string | undefined): string => {
+    if (!status || status.trim() === "") return "bg-muted/30 text-muted-foreground"
+    const s = status.toLowerCase().trim()
+    if (s.includes("accept") || s.includes("admis") || s.includes("approved") || s.includes("admitted")) return "bg-green-500/20 text-green-700 dark:text-green-400"
+    if (s.includes("reject") || s.includes("refus") || s.includes("refused") || s.includes("denied")) return "bg-red-500/20 text-red-700 dark:text-red-400"
+    if (s.includes("pending") || s.includes("en attente") || s.includes("waiting") || s.includes("en cours")) return "bg-amber-500/20 text-amber-700 dark:text-amber-400"
+    if (s.includes("progress") || s.includes("submitted") || s.includes("soumis") || s.includes("under review")) return "bg-blue-500/20 text-blue-700 dark:text-blue-400"
+    return "bg-muted/30 text-muted-foreground"
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
@@ -124,6 +136,8 @@ export default function ViewApplications({ open, onOpenChange, prospectId }: Vie
                     <TableHead>Degree Level</TableHead>
                     <TableHead>Campus City</TableHead>
                     <TableHead>Date of Candidacy</TableHead>
+                    <TableHead>Application Status</TableHead>
+                    <TableHead>Comment</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -135,6 +149,12 @@ export default function ViewApplications({ open, onOpenChange, prospectId }: Vie
                       <TableCell>{application.degreeLevel || "—"}</TableCell>
                       <TableCell>{application.campusCity || "—"}</TableCell>
                       <TableCell>{application.dateOfCandidacy ? formatDate(application.dateOfCandidacy) : "—"}</TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusStyle(application.applicationStatus)}`}>
+                          {application.applicationStatus || "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell>{application.comment || "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

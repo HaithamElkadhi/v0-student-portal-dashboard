@@ -147,6 +147,8 @@ export async function POST(request: NextRequest) {
         degreeLevel: getFieldValue(fields, ["Degree Level", "degree level", "Degree level", "Livello di laurea", "Level"]),
         campusCity: getFieldValue(fields, ["Campus City", "campus city", "Campus city", "Città del campus", "City"]),
         dateOfCandidacy: getFieldValue(fields, ["Date of Candidacy", "date of candidacy", "Date of candidacy", "Data di candidatura", "Date"]),
+        applicationStatus: getFieldValue(fields, ["Application Status", "application status", "Status", "status", "Statut"]),
+        comment: getFieldValue(fields, ["Commentaire", "commentaire", "Comment", "comment", "Comments"]),
       }
     })
 

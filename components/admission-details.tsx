@@ -201,7 +201,7 @@ export default function AdmissionDetails({ open, onOpenChange, admissionData }: 
     },
     {
       id: "paiement",
-      title: "Paiement",
+      title: "Payment",
       icon: <CreditCard className="w-6 h-6" />,
       mainField: admissionData.finalPaiement || admissionData.paymentAcceptanceFees,
       fields: [
