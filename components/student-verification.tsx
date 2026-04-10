@@ -5,7 +5,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, FolderInput, Mail } from "lucide-react"
 
 interface FileAttachment {
   id: string
@@ -16,24 +16,18 @@ interface FileAttachment {
 }
 
 interface AdmissionData {
-  // Bloc 1 - Proposal
   proposalDocument?: string | string[] | FileAttachment[]
   proposalStatus?: string | string[]
-  // Bloc 2 - Paiement
   upfrontPaiement?: string | string[]
   finalPaiement?: string | string[]
-  // Bloc 3 - Documents
   admissionFolderDocuments?: string
   documentEvaluation?: string | string[]
   translation?: string | string[]
   declarationOfValue?: string | string[]
-  // Bloc 4 - Requirement
   emailForApplication?: string
   accountUniversitaly?: string | string[]
   accountPrenotami?: string | string[]
-  // Bloc 5 - Application
   applicationUniversity?: string | string[]
-  // Legacy fields (for backward compatibility)
   proposal?: string | string[]
   paymentFirstRate?: string | string[]
   application?: string | string[]
@@ -59,16 +53,18 @@ interface StudentVerificationProps {
     admission?: AdmissionData
     accountStatus?: string
   }) => void
-  onBack: () => void
+  /** When set, first step shows a back control (e.g. standalone /verification route). Omit on the main landing page. */
+  onBack?: () => void
+  /** Hides repeated logo and standalone back; tuned for the home landing layout. */
+  embedded?: boolean
 }
 
-export default function StudentVerification({ onSuccess, onBack }: StudentVerificationProps) {
+export default function StudentVerification({ onSuccess, onBack, embedded = false }: StudentVerificationProps) {
   const [step, setStep] = useState<"method" | "details">("method")
   const [loginMethod, setLoginMethod] = useState<"email" | "folder" | null>(null)
   const [formData, setFormData] = useState({
     email: "",
     folderId: "",
-    name: "",
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -113,9 +109,8 @@ export default function StudentVerification({ onSuccess, onBack }: StudentVerifi
       }
 
       if (data.success && data.student) {
-        // Use the student data from Airtable
         const student = data.student
-        
+
         onSuccess({
           name: student.name || "Student",
           email: student.email,
@@ -144,136 +139,142 @@ export default function StudentVerification({ onSuccess, onBack }: StudentVerifi
     }
   }
 
+  const showStandaloneBack = step === "method" && onBack && !embedded
+
   return (
     <div className="w-full max-w-md">
+      {showStandaloneBack ? (
+        <button
+          type="button"
+          onClick={onBack}
+          className="mb-5 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-4 shrink-0" aria-hidden />
+          Home
+        </button>
+      ) : null}
+
       {step === "method" ? (
-        <>
-          <button
-            onClick={onBack}
-            className="mb-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back
-          </button>
-
-          <Card className="p-8 border-2">
-            <div className="mb-8">
-              <div className="flex items-center justify-center mb-4">
-                <img 
-                  src="/Jeexpert Logo base.png" 
-                  alt="JEEXPERT Logo" 
-                  className="h-12 w-auto"
-                />
-              </div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">Student Verification</h2>
-              <p className="text-sm text-muted-foreground">Choose how you'd like to verify your identity</p>
+        <Card className="border border-border/80 p-6 shadow-sm sm:p-7">
+          {!embedded ? (
+            <div className="mb-6 flex justify-center">
+              <img src="/Jeexpert Logo base.png" alt="" className="h-11 w-auto" />
             </div>
+          ) : null}
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">Sign in</h2>
+            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+              Use the same email or folder ID we use in your file.
+            </p>
+          </div>
 
-            <div className="space-y-3">
-              <button
-                onClick={() => handleMethodSelect("email")}
-                className="w-full p-4 rounded-lg border-2 border-border hover:border-primary hover:bg-muted transition-all text-left group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
-                    ✉
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">Verify with Email</p>
-                    <p className="text-xs text-muted-foreground">Use your registered email address</p>
-                  </div>
-                </div>
-              </button>
+          <div className="flex flex-col gap-2.5">
+            <button
+              type="button"
+              onClick={() => handleMethodSelect("email")}
+              className="flex w-full items-center gap-3 rounded-lg border border-border bg-card px-3.5 py-3 text-left transition-colors hover:bg-muted/60"
+            >
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <Mail className="size-[18px]" strokeWidth={2} aria-hidden />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-foreground">Email</span>
+                <span className="block text-xs text-muted-foreground">Address on your application</span>
+              </span>
+            </button>
 
-              <button
-                onClick={() => handleMethodSelect("folder")}
-                className="w-full p-4 rounded-lg border-2 border-border hover:border-secondary hover:bg-muted transition-all text-left group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-secondary text-secondary-foreground flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
-                    📁
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">Verify with Folder ID</p>
-                    <p className="text-xs text-muted-foreground">Use your unique folder number</p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </Card>
-        </>
+            <button
+              type="button"
+              onClick={() => handleMethodSelect("folder")}
+              className="flex w-full items-center gap-3 rounded-lg border border-border bg-card px-3.5 py-3 text-left transition-colors hover:bg-muted/60"
+            >
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-secondary/15 text-secondary-foreground">
+                <FolderInput className="size-[18px]" strokeWidth={2} aria-hidden />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-foreground">Folder ID</span>
+                <span className="block text-xs text-muted-foreground">e.g. JEE-2024-00001</span>
+              </span>
+            </button>
+          </div>
+        </Card>
       ) : (
         <>
           <button
-            onClick={() => setStep("method")}
-            className="mb-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            type="button"
+            onClick={() => {
+              setStep("method")
+              setLoginMethod(null)
+              setError(null)
+            }}
+            className="mb-5 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back
+            <ArrowLeft className="size-4 shrink-0" aria-hidden />
+            Other sign-in option
           </button>
 
-          <Card className="p-8 border-2">
-            <div className="mb-8">
-              <div className="flex items-center justify-center mb-4">
-                <img 
-                  src="/Jeexpert Logo base.png" 
-                  alt="JEEXPERT Logo" 
-                  className="h-12 w-auto"
-                />
+          <Card className="border border-border/80 p-6 shadow-sm sm:p-7">
+            {!embedded ? (
+              <div className="mb-6 flex justify-center">
+                <img src="/Jeexpert Logo base.png" alt="" className="h-11 w-auto" />
               </div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">
-                {loginMethod === "email" ? "Email Verification" : "Folder ID Verification"}
+            ) : null}
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                {loginMethod === "email" ? "Your email" : "Your folder ID"}
               </h2>
-              <p className="text-sm text-muted-foreground">Enter your details to access your profile</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">We match this against our records.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {loginMethod === "email" ? (
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Email Address</label>
+                <div className="space-y-2">
+                  <label htmlFor="sv-email" className="text-sm font-medium text-foreground">
+                    Email
+                  </label>
                   <Input
+                    id="sv-email"
                     type="email"
                     name="email"
-                    placeholder="your@email.com"
+                    autoComplete="email"
+                    placeholder="you@example.com"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="border-input"
                   />
                 </div>
               ) : (
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">Folder ID</label>
+                <div className="space-y-2">
+                  <label htmlFor="sv-folder" className="text-sm font-medium text-foreground">
+                    Folder ID
+                  </label>
                   <Input
+                    id="sv-folder"
                     type="text"
                     name="folderId"
+                    autoComplete="off"
                     placeholder="JEE-2024-00001"
                     value={formData.folderId}
                     onChange={handleInputChange}
                     required
-                    className="border-input"
                   />
                 </div>
               )}
 
-              {error && (
-                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+              {error ? (
+                <div className="rounded-md border border-destructive/25 bg-destructive/5 px-3 py-2.5">
                   <p className="text-sm text-destructive">{error}</p>
                 </div>
-              )}
+              ) : null}
 
               <Button
                 type="submit"
                 disabled={loading || (loginMethod === "email" ? !formData.email : !formData.folderId)}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="w-full"
               >
-                {loading ? "Verifying..." : "Verify & Continue"}
+                {loading ? "Checking…" : "Continue"}
               </Button>
             </form>
-
-            <p className="text-xs text-muted-foreground text-center mt-4">
-              Your credentials will be verified against our records
-            </p>
           </Card>
         </>
       )}

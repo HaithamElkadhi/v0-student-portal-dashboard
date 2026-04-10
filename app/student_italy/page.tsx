@@ -69,11 +69,11 @@ export default function StudentItalyPage() {
           setStudentInfo(parsedInfo)
         } catch (error) {
           console.error("Error parsing student info:", error)
-          router.push("/verification")
+          router.push("/")
         }
       } else {
-        // No student info found, redirect to verification
-        router.push("/verification")
+        // No student info found, redirect to landing / sign-in
+        router.push("/")
       }
       setLoading(false)
     }
