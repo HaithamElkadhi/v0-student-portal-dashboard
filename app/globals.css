@@ -18,6 +18,12 @@
   --jx-sand: #ede9e0;
   --jx-muted: #888780;
   --jx-hint: #b4b2a9;
+  /* Student payment views */
+  --payment-text-primary: #1a1520;
+  --payment-text-secondary: #5f5e5a;
+  --payment-bg-secondary: #f0eeeb;
+  --payment-border-tertiary: #e5e1d8;
+  --payment-border-secondary: #dcd8d0;
   /* Portal login panel (light / dark) */
   --color-background-primary: #ffffff;
   /* <CHANGE> Updated color theme for education portal - blues and teals */

@@ -6,7 +6,8 @@ import { Card } from "@/components/ui/card"
 import StatusCard from "@/components/status-card"
 import AdmissionDetails from "@/components/admission-details"
 import ViewApplications from "@/components/view-applications"
-import { LogOut, Mail, FolderOpen, User, Phone, MessageCircle, Calendar, Globe, MapPin, FileText, Shield, CheckCircle2, Flag, RefreshCw } from "lucide-react"
+import Link from "next/link"
+import { LogOut, Mail, FolderOpen, User, Phone, MessageCircle, Calendar, Globe, MapPin, FileText, Shield, CheckCircle2, Flag, RefreshCw, CreditCard } from "lucide-react"
 
 interface FileAttachment {
   id: string
@@ -463,6 +464,26 @@ export default function StudentDashboard({ onLogout, studentInfo, onRefresh }: S
             Track your journey with JEEXPERT across admission, visa, scholarship, and integration.
           </p>
         </div>
+
+        {/* Paiement — accès rapide */}
+        <Link href="/paiement" className="mb-8 block">
+          <Card className="border-2 bg-card p-6 shadow-lg transition-colors hover:bg-muted/20">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="rounded-lg bg-primary/10 p-3">
+                  <CreditCard className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-foreground">Paiement</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Échéances, factures et historique de vos règlements
+                  </p>
+                </div>
+              </div>
+              <span className="text-sm font-semibold text-primary sm:shrink-0">Ouvrir →</span>
+            </div>
+          </Card>
+        </Link>
 
         {/* Status Overview */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
