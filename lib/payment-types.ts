@@ -9,31 +9,13 @@ export interface Payment {
   dueDate: string
   comment: string
   paymentDate?: string
-  transferRef?: string
   exemptReason?: string
-  /** Libellé affiché (n° facture ou nom de fichier) */
+  /** Texte ou nom de fichier depuis le champ « Facture » */
   invoiceRef?: string
-  /** URL signée Airtable si le champ « Facture » est une pièce jointe */
+  /** URL signée Airtable si « Facture » est une pièce jointe */
   invoiceUrl?: string
-}
-
-export type TimelineEventType =
-  | "payment_received"
-  | "reminder"
-  | "invoice_added"
-  | "invoice_modified"
-  | "overdue_alert"
-  | "exemption_granted"
-
-export interface TimelineEvent {
-  id: string
-  date: string
-  type: TimelineEventType
-  paymentRef: string
-  invoiceRef?: string
-  oldAmount?: number
-  newAmount?: number
-  reason?: string
-  transferRef?: string
-  daysLeft?: number
+  /** Création de la ligne (réponse API Airtable) */
+  createdTime?: string
+  /** Champ « Last modification » / équivalent, sinon ≈ createdTime */
+  lastModifiedAt?: string
 }

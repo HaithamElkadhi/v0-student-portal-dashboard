@@ -10,9 +10,18 @@ const ALIASES = {
   dueDate: ["Échéance", "Echeance", "Date d'échéance", "Due date", "Date echeance"],
   paymentDate: ["Date de paiement", "Payment date", "Date paiement"],
   comment: ["Commentaire", "Notes", "Note", "Comment"],
-  transferRef: ["Référence virement", "Reference virement", "Transfer reference", "Virement"],
   exemptReason: ["Motif exonération", "Motif exoneration", "Exemption reason", "Raison exonération"],
-  invoiceRef: ["Facture", "N° facture", "N facture", "Invoice", "INV"],
+  /** Unique champ facture dans la base (texte ou pièce jointe) */
+  invoice: ["Facture"],
+  /** Champ type « last modified time » dans Airtable */
+  lastModifiedAt: [
+    "Last modification",
+    "Dernière modification",
+    "Derniere modification",
+    "Last modified",
+    "Last Modified",
+    "Modified",
+  ],
 } as const
 
 function pickField(fields: Record<string, unknown>, candidates: readonly string[]): unknown {
@@ -100,6 +109,14 @@ function toIsoDate(v: unknown): string {
   return new Date().toISOString().slice(0, 10)
 }
 
+/** Date-heure ISO pour champs lastModifiedTime / createdTime Airtable */
+function toIsoDateTime(v: unknown): string | undefined {
+  if (typeof v !== "string" || !v.trim()) return undefined
+  const d = new Date(v.trim())
+  if (Number.isNaN(d.getTime())) return undefined
+  return d.toISOString()
+}
+
 /** Texte normalisé pour comparer statuts (évite que « paye » dans « payer » déclenche Payé). */
 function normalizeStatusText(raw: unknown): string {
   return String(raw ?? "")
@@ -126,7 +143,11 @@ export function mapAirtableStatus(raw: unknown): PaymentStatus {
     return "due"
   }
 
-  if (s.includes("exonere") || s.includes("exempt")) return "exempt"
+  // Evite les faux positifs type "non exonere"
+  if (/non\s*-?\s*exonere/.test(s)) return "due"
+
+  // Exonération uniquement sur mots complets
+  if (/\bexonere\b|\bexoneree\b|\bexempt\b/u.test(s)) return "exempt"
   if (s.includes("retard") || s.includes("overdue") || s.includes("en retard")) return "overdue"
   if (s === "paid" || /\bpaye\b/u.test(s)) return "paid"
   return "due"
@@ -134,9 +155,13 @@ export function mapAirtableStatus(raw: unknown): PaymentStatus {
 
 export function mapAirtableRecordToPayment(record: {
   id: string
+  createdTime?: string
   fields: Record<string, unknown>
 }): Payment | null {
   const { id, fields } = record
+  const createdTime = toIsoDateTime(record.createdTime)
+  const lastModifiedFromField = toIsoDateTime(pickField(fields, ALIASES.lastModifiedAt))
+  const lastModifiedAt = lastModifiedFromField ?? createdTime
   const refRaw = pickField(fields, ALIASES.ref)
   const ref = String(refRaw ?? id).trim() || id
 
@@ -150,9 +175,8 @@ export function mapAirtableRecordToPayment(record: {
   const paymentDateRaw = pickField(fields, ALIASES.paymentDate)
   const paymentDate = paymentDateRaw ? toIsoDate(paymentDateRaw) : undefined
   const comment = String(pickField(fields, ALIASES.comment) ?? "").trim()
-  const transferRef = toText(pickField(fields, ALIASES.transferRef)) || undefined
   const exemptReason = String(pickField(fields, ALIASES.exemptReason) ?? "").trim() || undefined
-  const inv = pickField(fields, ALIASES.invoiceRef)
+  const inv = pickField(fields, ALIASES.invoice)
   const { label: invoiceLabel, url: invoiceUrl } = normalizeInvoiceField(inv)
   const invoiceRef = invoiceLabel
 
@@ -165,9 +189,10 @@ export function mapAirtableRecordToPayment(record: {
     dueDate,
     comment,
     paymentDate,
-    transferRef,
     exemptReason,
     invoiceRef,
     invoiceUrl,
+    createdTime,
+    lastModifiedAt,
   }
 }

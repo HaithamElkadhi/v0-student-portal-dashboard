@@ -5,9 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { PaymentTable } from "@/components/payments/payment-table"
-import { PaymentTimeline } from "@/components/payments/payment-timeline"
-import type { Payment, PaymentStatus, TimelineEvent } from "@/lib/payment-types"
-import { sortTimelineDesc } from "@/lib/payment-utils"
+import type { Payment } from "@/lib/payment-types"
 
 interface StudentInfo {
   name: string
@@ -20,7 +18,6 @@ export default function PaiementPage() {
   const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [payments, setPayments] = useState<Payment[]>([])
-  const [timeline, setTimeline] = useState<TimelineEvent[]>([])
   const [loadingPayments, setLoadingPayments] = useState(false)
   const [fetchError, setFetchError] = useState<string | null>(null)
 
@@ -62,7 +59,6 @@ export default function PaiementPage() {
         }
         if (!cancelled) {
           setPayments(Array.isArray(data.payments) ? data.payments : [])
-          setTimeline(Array.isArray(data.timeline) ? data.timeline : [])
         }
       })
       .catch((e: Error) => {
@@ -76,13 +72,6 @@ export default function PaiementPage() {
       cancelled = true
     }
   }, [studentInfo])
-
-  const timelineSorted = sortTimelineDesc(timeline)
-
-  function handlePaymentAction(paymentRef: string, status: PaymentStatus) {
-    void paymentRef
-    void status
-  }
 
   function handleInvoiceOpen(paymentRef: string, invoiceRef: string) {
     void paymentRef
@@ -140,14 +129,7 @@ export default function PaiementPage() {
             <div className="h-10 w-10 animate-spin rounded-full border-2 border-muted-foreground border-t-primary" />
           </div>
         ) : (
-          <div className="flex flex-col gap-8">
-            <PaymentTable
-              payments={payments}
-              onPaymentAction={handlePaymentAction}
-              onInvoiceOpen={handleInvoiceOpen}
-            />
-            <PaymentTimeline events={timelineSorted} payments={payments} />
-          </div>
+          <PaymentTable payments={payments} onInvoiceOpen={handleInvoiceOpen} />
         )}
       </main>
     </div>

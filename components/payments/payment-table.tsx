@@ -15,7 +15,6 @@ const textPrimary = "var(--payment-text-primary)"
 const textSecondary = "var(--payment-text-secondary)"
 const bgSecondary = "var(--payment-bg-secondary)"
 const borderTertiary = "var(--payment-border-tertiary)"
-const borderSecondary = "var(--payment-border-secondary)"
 
 function CreditCardIcon({ className }: { className?: string }) {
   return (
@@ -70,11 +69,10 @@ function StatusBadge({ status }: { status: PaymentStatus }) {
 
 export interface PaymentTableProps {
   payments: Payment[]
-  onPaymentAction: (paymentRef: string, status: PaymentStatus) => void
   onInvoiceOpen: (paymentRef: string, invoiceRef: string) => void
 }
 
-export function PaymentTable({ payments, onPaymentAction, onInvoiceOpen }: PaymentTableProps) {
+export function PaymentTable({ payments, onInvoiceOpen }: PaymentTableProps) {
   const urgent = getUrgentDuePayment(payments)
 
   return (
@@ -107,7 +105,7 @@ export function PaymentTable({ payments, onPaymentAction, onInvoiceOpen }: Payme
         style={{ borderColor: borderTertiary, marginBottom: 20 }}
       >
         <table
-          className="w-full min-w-[900px] table-fixed border-collapse text-left"
+          className="w-full min-w-[800px] table-fixed border-collapse text-left"
           style={{ tableLayout: "fixed" }}
         >
           <colgroup>
@@ -119,11 +117,10 @@ export function PaymentTable({ payments, onPaymentAction, onInvoiceOpen }: Payme
             <col style={{ width: 100 }} />
             <col style={{ width: 145 }} />
             <col style={{ width: 95 }} />
-            <col style={{ width: 100 }} />
           </colgroup>
           <thead>
             <tr style={{ background: bgSecondary, borderBottom: `0.5px solid ${borderTertiary}` }}>
-              {["Réf.", "Montant", "Devise", "Motif", "Statut", "Échéance", "Commentaire", "Facture", "Action"].map(
+              {["Réf.", "Montant", "Devise", "Motif", "Statut", "Échéance", "Commentaire", "Facture"].map(
                 (h) => (
                   <th
                     key={h}
@@ -140,7 +137,7 @@ export function PaymentTable({ payments, onPaymentAction, onInvoiceOpen }: Payme
             {payments.length === 0 ? (
               <tr>
                 <td
-                  colSpan={9}
+                  colSpan={8}
                   className="px-3 py-8 text-center text-sm"
                   style={{ color: textSecondary }}
                 >
@@ -242,12 +239,6 @@ export function PaymentTable({ payments, onPaymentAction, onInvoiceOpen }: Payme
                       </span>
                     )}
                   </td>
-                  <td className="px-3 py-[11px]">
-                    <ActionButton
-                      status={p.status}
-                      onClick={() => onPaymentAction(p.ref, p.status)}
-                    />
-                  </td>
                 </tr>
               )
             })}
@@ -255,45 +246,5 @@ export function PaymentTable({ payments, onPaymentAction, onInvoiceOpen }: Payme
         </table>
       </div>
     </section>
-  )
-}
-
-function ActionButton({ status, onClick }: { status: PaymentStatus; onClick: () => void }) {
-  const base =
-    "cursor-pointer whitespace-nowrap rounded-md border-none px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-80"
-  if (status === "due") {
-    return (
-      <button type="button" onClick={onClick} className={base} style={{ background: "#0F3F7A", color: "white" }}>
-        Marquer payé
-      </button>
-    )
-  }
-  if (status === "paid") {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        className={base}
-        style={{
-          background: bgSecondary,
-          color: textPrimary,
-          border: `0.5px solid ${borderSecondary}`,
-        }}
-      >
-        Voir détail
-      </button>
-    )
-  }
-  if (status === "exempt") {
-    return (
-      <button type="button" onClick={onClick} className={base} style={{ background: "#EEEDFE", color: "#3C3489" }}>
-        Voir motif
-      </button>
-    )
-  }
-  return (
-    <button type="button" onClick={onClick} className={base} style={{ background: "#FCEBEB", color: "#791F1F" }}>
-      Régulariser
-    </button>
   )
 }

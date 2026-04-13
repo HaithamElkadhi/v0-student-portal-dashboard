@@ -1,4 +1,4 @@
-import type { Payment, PaymentStatus, TimelineEvent } from "./payment-types"
+import type { Payment, PaymentStatus } from "./payment-types"
 
 const MONTHS_FR = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."] as const
 
@@ -49,30 +49,6 @@ export function formatDueDateLabel(iso: string): string {
   return `${dd} ${mo} ${yy}`
 }
 
-export function formatFrDateTime(iso: string): string {
-  const d = new Date(iso)
-  const today = new Date()
-  const sameDay =
-    d.getDate() === today.getDate() &&
-    d.getMonth() === today.getMonth() &&
-    d.getFullYear() === today.getFullYear()
-
-  const dd = String(d.getDate()).padStart(2, "0")
-  const mo = MONTHS_FR[d.getMonth()]
-  const yy = d.getFullYear()
-  const hh = String(d.getHours()).padStart(2, "0")
-  const mm = String(d.getMinutes()).padStart(2, "0")
-  const datePart = `${dd} ${mo} ${yy}`
-  if (sameDay) {
-    return `Auj. ${datePart} ${hh}:${mm}`
-  }
-  return `${datePart} ${hh}:${mm}`
-}
-
-export function sortTimelineDesc(events: TimelineEvent[]): TimelineEvent[] {
-  return [...events].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-}
-
 export function formatMoney(amount: number, currency: string): string {
   return (
     new Intl.NumberFormat("fr-FR", {
@@ -88,4 +64,71 @@ export function formatAmountFr(amount: number): string {
     minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
     maximumFractionDigits: 2,
   }).format(amount)
+}
+
+export type PaymentSummaryTone = "danger" | "warning" | "success" | "muted"
+
+export interface PaymentSummaryLine {
+  tone: PaymentSummaryTone
+  text: string
+}
+
+/** Résumé court pour le tableau de bord (carte Paiement). */
+export function getPaymentDashboardSummaryLines(payments: Payment[]): PaymentSummaryLine[] {
+  const lines: PaymentSummaryLine[] = []
+  if (payments.length === 0) {
+    return [{ tone: "muted", text: "Aucune ligne de paiement pour ce dossier." }]
+  }
+
+  const overdue = payments.filter((p) => p.status === "overdue")
+  const due = payments.filter((p) => p.status === "due")
+  const paid = payments.filter((p) => p.status === "paid")
+  const exempt = payments.filter((p) => p.status === "exempt")
+
+  if (overdue.length > 0) {
+    lines.push({
+      tone: "danger",
+      text:
+        overdue.length === 1
+          ? `Paiement en retard : ${overdue[0].ref} — ${formatMoney(overdue[0].amount, overdue[0].currency)} (échéance ${formatDueDateLabel(overdue[0].dueDate)}).`
+          : `${overdue.length} paiement(s) en retard — ouvrez la page pour le détail.`,
+    })
+  }
+
+  const urgent = getUrgentDuePayment(payments)
+
+  if (due.length > 0) {
+    if (due.length === 1) {
+      const p = due[0]
+      const j = daysUntilDue(p.dueDate)
+      const soon = j >= 0 && j <= 7 ? ` · dans ${j} jour(s)` : ""
+      lines.push({
+        tone: "warning",
+        text: `Facture / paiement à régler : ${p.ref} — ${formatMoney(p.amount, p.currency)} · échéance ${formatDueDateLabel(p.dueDate)}${soon}.`,
+      })
+    } else {
+      let t = `${due.length} paiement(s) encore à régler.`
+      if (urgent) {
+        const j = daysUntilDue(urgent.dueDate)
+        t += ` Le plus urgent : ${urgent.ref} (${j} jour(s)).`
+      }
+      lines.push({ tone: "warning", text: t })
+    }
+  }
+
+  if (overdue.length === 0 && due.length === 0) {
+    lines.push({
+      tone: "success",
+      text: "Aucun impayé — rien à régler pour l’instant.",
+    })
+  }
+
+  const meta: string[] = []
+  if (paid.length > 0) meta.push(`${paid.length} réglé${paid.length > 1 ? "s" : ""}`)
+  if (exempt.length > 0) meta.push(`${exempt.length} exonéré${exempt.length > 1 ? "s" : ""}`)
+  if (meta.length > 0) {
+    lines.push({ tone: "muted", text: meta.join(" · ") + "." })
+  }
+
+  return lines
 }

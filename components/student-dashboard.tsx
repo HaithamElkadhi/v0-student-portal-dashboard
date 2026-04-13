@@ -7,7 +7,8 @@ import StatusCard from "@/components/status-card"
 import AdmissionDetails from "@/components/admission-details"
 import ViewApplications from "@/components/view-applications"
 import Link from "next/link"
-import { LogOut, Mail, FolderOpen, User, Phone, MessageCircle, Calendar, Globe, MapPin, FileText, Shield, CheckCircle2, Flag, RefreshCw, CreditCard } from "lucide-react"
+import { LogOut, Mail, FolderOpen, User, Phone, MessageCircle, Calendar, Globe, MapPin, FileText, Shield, Flag, RefreshCw, CreditCard } from "lucide-react"
+import { PaymentHomeSummary } from "@/components/payments/payment-home-summary"
 
 interface FileAttachment {
   id: string
@@ -142,51 +143,6 @@ export default function StudentDashboard({ onLogout, studentInfo, onRefresh }: S
   const admissionPercentage = calculateAdmissionPercentage(studentInfo.admission)
   const admissionStatus = getAdmissionStatus(studentInfo.admission)
 
-  // Get status color classes based on account status
-  const getStatusColors = (status?: string) => {
-    if (!status) {
-      return {
-        bg: "bg-muted/50",
-        icon: "text-muted-foreground",
-        badgeBg: "bg-muted/20",
-        badgeText: "text-muted-foreground"
-      }
-    }
-    const statusLower = status.toLowerCase()
-    if (statusLower === "active") {
-      return {
-        bg: "bg-green-500/10",
-        icon: "text-green-600 dark:text-green-400",
-        badgeBg: "bg-green-500/20",
-        badgeText: "text-green-700 dark:text-green-400"
-      }
-    } else if (statusLower === "inactive") {
-      return {
-        bg: "bg-red-500/10",
-        icon: "text-red-600 dark:text-red-400",
-        badgeBg: "bg-red-500/20",
-        badgeText: "text-red-700 dark:text-red-400"
-      }
-    } else if (statusLower === "suspended") {
-      return {
-        bg: "bg-yellow-500/10",
-        icon: "text-yellow-600 dark:text-yellow-400",
-        badgeBg: "bg-yellow-500/20",
-        badgeText: "text-yellow-700 dark:text-yellow-400"
-      }
-    }
-    // Default fallback
-    return {
-      bg: "bg-muted/50",
-      icon: "text-muted-foreground",
-      badgeBg: "bg-muted/20",
-      badgeText: "text-muted-foreground"
-    }
-  }
-
-  const statusColors = getStatusColors(studentInfo.accountStatus)
-  const displayStatus = studentInfo.accountStatus || "—"
-
   const handleRefresh = async () => {
     setIsRefreshing(true)
     try {
@@ -269,14 +225,6 @@ export default function StudentDashboard({ onLogout, studentInfo, onRefresh }: S
               <FolderOpen className="w-4 h-4 text-muted-foreground" />
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">ID:</span>
               <span className="text-sm font-bold text-primary font-mono">{studentInfo.folderId || "—"}</span>
-            </div>
-
-            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${statusColors.bg}`}>
-              <CheckCircle2 className={`w-4 h-4 ${statusColors.icon}`} />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Status:</span>
-              <span className={`px-2 py-1 rounded-full ${statusColors.badgeBg} ${statusColors.badgeText} text-xs font-bold`}>
-                {displayStatus}
-              </span>
             </div>
           </div>
         </div>
@@ -465,22 +413,20 @@ export default function StudentDashboard({ onLogout, studentInfo, onRefresh }: S
           </p>
         </div>
 
-        {/* Paiement — accès rapide */}
+        {/* Paiement — accès rapide + résumé */}
         <Link href="/paiement" className="mb-8 block">
           <Card className="border-2 bg-card p-6 shadow-lg transition-colors hover:bg-muted/20">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex min-w-0 flex-1 items-start gap-4">
                 <div className="rounded-lg bg-primary/10 p-3">
                   <CreditCard className="h-6 w-6 text-primary" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="text-xl font-bold text-foreground">Paiement</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Échéances, factures et historique de vos règlements
-                  </p>
+                  <PaymentHomeSummary folderId={studentInfo.folderId ?? ""} email={studentInfo.email ?? ""} />
                 </div>
               </div>
-              <span className="text-sm font-semibold text-primary sm:shrink-0">Ouvrir →</span>
+              <span className="text-sm font-semibold text-primary sm:shrink-0 sm:pt-1">Ouvrir →</span>
             </div>
           </Card>
         </Link>

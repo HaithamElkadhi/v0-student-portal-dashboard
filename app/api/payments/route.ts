@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import type { Payment, TimelineEvent } from "@/lib/payment-types"
+import type { Payment } from "@/lib/payment-types"
 import { mapAirtableRecordToPayment } from "@/lib/map-airtable-payment"
 import {
   escapeAirtableFormulaString,
@@ -54,36 +54,6 @@ function isTextLike(type: string) {
 
 function isLink(type: string) {
   return type === "multipleRecordLinks" || type === "singleRecordLink"
-}
-
-function toIsoAtHour(dateIso: string, hour: number): string {
-  const [y, m, d] = dateIso.slice(0, 10).split("-").map(Number)
-  return new Date(y, m - 1, d, hour, 0, 0, 0).toISOString()
-}
-
-function shiftIsoDays(dateIso: string, days: number, hour: number): string {
-  const [y, m, d] = dateIso.slice(0, 10).split("-").map(Number)
-  const dt = new Date(y, m - 1, d)
-  dt.setDate(dt.getDate() + days)
-  dt.setHours(hour, 0, 0, 0)
-  return dt.toISOString()
-}
-
-function daysUntil(dateIso: string): number {
-  const [y, m, d] = dateIso.slice(0, 10).split("-").map(Number)
-  const due = new Date(y, m - 1, d)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  due.setHours(0, 0, 0, 0)
-  return Math.round((due.getTime() - today.getTime()) / 86400000)
-}
-
-function mentionsInvoiceUpdate(comment: string): boolean {
-  const s = comment
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-  return s.includes("modifi") || s.includes("corrig") || s.includes("mis a jour")
 }
 
 export async function POST(request: NextRequest) {
@@ -145,7 +115,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         payments: [] as Payment[],
-        timeline: [] as TimelineEvent[],
         message: `Table « ${AIRTABLE_PAYMENTS_TABLE_ID} » introuvable dans la base.`,
       })
     }
@@ -223,7 +192,7 @@ export async function POST(request: NextRequest) {
         const prospectData = await prospectRes.json()
         const recId: string | undefined = prospectData.records?.[0]?.id
         if (!recId) {
-          return NextResponse.json({ success: true, payments: [] as Payment[], timeline: [] as TimelineEvent[] })
+          return NextResponse.json({ success: true, payments: [] as Payment[] })
         }
 
         const fname = prospectField.name
@@ -282,87 +251,9 @@ export async function POST(request: NextRequest) {
       if (mapped) payments.push(mapped)
     }
 
-    const timeline: TimelineEvent[] = []
-    for (const p of payments) {
-      if (p.invoiceRef) {
-        timeline.push({
-          id: `${p.ref}-invoice-added`,
-          date: toIsoAtHour(p.dueDate, 9),
-          type: "invoice_added",
-          paymentRef: p.ref,
-          invoiceRef: p.invoiceRef,
-        })
-      }
-
-      if (p.invoiceRef && p.comment && mentionsInvoiceUpdate(p.comment)) {
-        timeline.push({
-          id: `${p.ref}-invoice-modified`,
-          date: toIsoAtHour(p.dueDate, 14),
-          type: "invoice_modified",
-          paymentRef: p.ref,
-          invoiceRef: p.invoiceRef,
-          reason: p.comment,
-        })
-      }
-
-      if (p.status === "due" && !p.paymentDate) {
-        const left = daysUntil(p.dueDate)
-        if (left >= 0 && left <= 7) {
-          timeline.push({
-            id: `${p.ref}-reminder-j7`,
-            date: shiftIsoDays(p.dueDate, -7, 8),
-            type: "reminder",
-            paymentRef: p.ref,
-            daysLeft: 7,
-          })
-          if (left <= 3) {
-            timeline.push({
-              id: `${p.ref}-reminder-j3`,
-              date: shiftIsoDays(p.dueDate, -3, 8),
-              type: "reminder",
-              paymentRef: p.ref,
-              daysLeft: 3,
-            })
-          }
-        }
-      }
-
-      if (p.status === "paid" && p.paymentDate) {
-        timeline.push({
-          id: `${p.ref}-received`,
-          date: toIsoAtHour(p.paymentDate, 9),
-          type: "payment_received",
-          paymentRef: p.ref,
-          transferRef: p.transferRef,
-        })
-      }
-
-      if (p.status === "overdue") {
-        timeline.push({
-          id: `${p.ref}-overdue`,
-          date: shiftIsoDays(p.dueDate, 1, 8),
-          type: "overdue_alert",
-          paymentRef: p.ref,
-        })
-      }
-
-      if (p.status === "exempt") {
-        timeline.push({
-          id: `${p.ref}-exempt`,
-          date: toIsoAtHour(p.dueDate, 10),
-          type: "exemption_granted",
-          paymentRef: p.ref,
-          reason: p.exemptReason,
-        })
-      }
-    }
-
-    timeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
     return NextResponse.json({
       success: true,
       payments,
-      timeline,
     })
   } catch (e) {
     console.error("POST /api/payments:", e)
