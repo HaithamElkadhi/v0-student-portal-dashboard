@@ -17,6 +17,8 @@ interface FileAttachment {
 
 interface AdmissionData {
   proposalDocument?: string | string[] | FileAttachment[]
+  contractDocument?: string | string[] | FileAttachment[]
+  languageCertificate?: string | string[] | FileAttachment[]
   proposalStatus?: string | string[]
   upfrontPaiement?: string | string[]
   finalPaiement?: string | string[]

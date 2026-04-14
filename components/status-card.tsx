@@ -1,6 +1,7 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 import { ReactNode } from "react"
 
 interface StatusCardProps {
@@ -11,35 +12,81 @@ interface StatusCardProps {
   color: "primary" | "secondary" | "accent"
   onClick?: () => void
   additionalContent?: ReactNode
+  /** Match JEEXPERT login / portal tokens */
+  portalStyle?: boolean
+  className?: string
 }
 
-export default function StatusCard({ title, status, percentage, icon, color, onClick, additionalContent }: StatusCardProps) {
-  const colorClasses = {
-    primary: "bg-primary/10 text-primary",
-    secondary: "bg-secondary/10 text-secondary",
-    accent: "bg-accent/10 text-accent",
-  }
+export default function StatusCard({
+  title,
+  status,
+  percentage,
+  icon,
+  color,
+  onClick,
+  additionalContent,
+  portalStyle,
+  className,
+}: StatusCardProps) {
+  const colorClasses = portalStyle
+    ? {
+        primary: "bg-[#fde8d8] text-[var(--jx-terracotta)]",
+        secondary: "bg-[var(--jx-cream)] text-[var(--jx-mid-2)]",
+        accent: "bg-[#fef3ec] text-[var(--jx-amber)]",
+      }
+    : {
+        primary: "bg-primary/10 text-primary",
+        secondary: "bg-secondary/10 text-secondary",
+        accent: "bg-accent/10 text-accent",
+      }
 
-  const progressColor = {
-    primary: "bg-primary",
-    secondary: "bg-secondary",
-    accent: "bg-accent",
-  }
+  const progressColor = portalStyle
+    ? {
+        primary: "bg-[var(--jx-terracotta)]",
+        secondary: "bg-[var(--jx-mid-2)]",
+        accent: "bg-[var(--jx-amber)]",
+      }
+    : {
+        primary: "bg-primary",
+        secondary: "bg-secondary",
+        accent: "bg-accent",
+      }
 
   return (
     <Card
-      className={`p-6 border-2 hover:shadow-lg transition-shadow ${onClick ? "cursor-pointer" : ""}`}
+      className={cn(
+        "gap-0 p-4 transition-shadow",
+        portalStyle
+          ? "rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md"
+          : "border-2 hover:shadow-lg",
+        onClick && "cursor-pointer",
+        className,
+      )}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between mb-4">
-        <div className={`text-3xl p-3 rounded-lg ${colorClasses[color]}`}>{icon}</div>
-        <span className="text-xs font-medium px-2 py-1 bg-muted text-muted-foreground rounded">{percentage}%</span>
+      <div className="mb-3 flex items-center justify-between">
+        <div className={`rounded-lg p-2 text-xl ${colorClasses[color]}`}>{icon}</div>
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 text-[11px] font-bold",
+            portalStyle
+              ? "bg-gray-100 text-gray-600"
+              : "bg-muted text-muted-foreground",
+          )}
+        >
+          {percentage}%
+        </span>
       </div>
 
-      <h3 className="font-bold text-foreground mb-1">{title}</h3>
-      <p className="text-sm text-muted-foreground mb-4">{status}</p>
+      <h3 className={cn("mb-0.5 text-sm font-bold", portalStyle ? "text-[var(--jx-night)]" : "text-foreground")}>{title}</h3>
+      <p className={cn("mb-3 text-xs", portalStyle ? "text-gray-400" : "text-muted-foreground")}>{status}</p>
 
-      <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+      <div
+        className={cn(
+          "h-1.5 w-full overflow-hidden rounded-full",
+          portalStyle ? "bg-gray-100" : "bg-muted",
+        )}
+      >
         <div
           className={`h-full ${progressColor[color]} transition-all duration-500`}
           style={{ width: `${percentage}%` }}
@@ -52,7 +99,14 @@ export default function StatusCard({ title, status, percentage, icon, color, onC
         </div>
       )}
       {onClick && !additionalContent && (
-        <p className="text-xs text-muted-foreground mt-3 text-center">Click to see details</p>
+        <p
+          className={cn(
+            "mt-2 text-center text-xs",
+            portalStyle ? "text-gray-400" : "text-muted-foreground",
+          )}
+        >
+          Voir les détails
+        </p>
       )}
     </Card>
   )

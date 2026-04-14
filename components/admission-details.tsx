@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -8,9 +9,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Card } from "@/components/ui/card"
-import { FileText, CreditCard, FolderOpen, CheckCircle, GraduationCap } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { FileText, FileSignature, FolderOpen, CheckCircle, GraduationCap, Languages } from "lucide-react"
+import ViewApplications from "@/components/view-applications"
 
-interface FileAttachment {
+export interface FileAttachment {
   id: string
   url: string
   filename: string
@@ -18,9 +21,10 @@ interface FileAttachment {
   type?: string
 }
 
-interface AdmissionData {
+export interface AdmissionData {
   // Bloc 1 - Proposal
   proposalDocument?: string | string[] | FileAttachment[]
+  contractDocument?: string | string[] | FileAttachment[]
   proposalStatus?: string | string[]
   // Bloc 2 - Paiement
   upfrontPaiement?: string | string[]
@@ -30,6 +34,7 @@ interface AdmissionData {
   documentEvaluation?: string | string[]
   translation?: string | string[]
   declarationOfValue?: string | string[]
+  languageCertificate?: string | string[] | FileAttachment[]
   // Bloc 4 - Requirement
   emailForApplication?: string
   accountUniversitaly?: string | string[]
@@ -48,6 +53,7 @@ interface AdmissionDetailsProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   admissionData?: AdmissionData
+  prospectId?: string
 }
 
 interface BlockData {
@@ -57,7 +63,7 @@ interface BlockData {
   mainField: string | string[] | undefined
   fields: Array<{
     label: string
-    value: string | string[] | undefined
+    value: string | string[] | FileAttachment[] | undefined
   }>
 }
 
@@ -78,8 +84,10 @@ const formatValue = (value: string | string[] | FileAttachment[] | undefined): s
   return String(value).trim() || "—"
 }
 
+type FieldValue = string | string[] | FileAttachment[] | undefined
+
 // Helper function to check if a value is completed
-const isCompleted = (value: string | string[] | undefined): boolean => {
+const isCompleted = (value: FieldValue): boolean => {
   const strValue = formatValue(value).toLowerCase()
   if (!value || strValue === "—") return false
   return (
@@ -93,7 +101,7 @@ const isCompleted = (value: string | string[] | undefined): boolean => {
 }
 
 // Helper function to check if a value is in progress
-const isInProgress = (value: string | string[] | undefined): boolean => {
+const isInProgress = (value: FieldValue): boolean => {
   const strValue = formatValue(value).toLowerCase()
   if (!value || strValue === "—") return false
   return (
@@ -109,12 +117,12 @@ const isInProgress = (value: string | string[] | undefined): boolean => {
 }
 
 // Helper function to check if a value has any data
-const hasValue = (value: string | string[] | undefined): boolean => {
+const hasValue = (value: FieldValue): boolean => {
   return value !== undefined && value !== null && formatValue(value) !== "—"
 }
 
 // Helper function to determine status badge
-const getStatusBadge = (value: string | string[] | undefined): { text: string; className: string } => {
+const getStatusBadge = (value: FieldValue): { text: string; className: string } => {
   const strValue = formatValue(value).toLowerCase()
   
   if (!value || strValue === "—") {
@@ -145,8 +153,88 @@ const getStatusBadge = (value: string | string[] | undefined): { text: string; c
   return { text: "In Progress", className: "bg-blue-500/20 text-blue-700 dark:text-blue-400" }
 }
 
+/** Proposal : une seule étape = présence du document de proposition. */
+function proposalDocumentPresent(admissionData: AdmissionData): boolean {
+  return hasValue(admissionData.proposalDocument)
+}
+
+function proposalStepBadge(admissionData: AdmissionData): { text: string; className: string } {
+  if (proposalDocumentPresent(admissionData)) {
+    return { text: "Étape passée", className: "bg-green-500/20 text-green-700 dark:text-green-400" }
+  }
+  return { text: "Étape non passée", className: "bg-gray-500/20 text-gray-700 dark:text-gray-400" }
+}
+
+function contractDocumentPresent(admissionData: AdmissionData): boolean {
+  return hasValue(admissionData.contractDocument)
+}
+
+function reglementStepBadge(admissionData: AdmissionData): { text: string; className: string } {
+  if (contractDocumentPresent(admissionData)) {
+    return { text: "Étape passée", className: "bg-green-500/20 text-green-700 dark:text-green-400" }
+  }
+  return { text: "Étape non passée", className: "bg-gray-500/20 text-gray-700 dark:text-gray-400" }
+}
+
+/** Pièce jointe = considéré comme reçu (vert). */
+function languageCertificateIsFileAttachment(value: FieldValue): boolean {
+  return Boolean(value && isFileAttachment(value))
+}
+
+function languageCertificateInProgressText(value: FieldValue): boolean {
+  if (!hasValue(value) || languageCertificateIsFileAttachment(value)) return false
+  if (isInProgress(value)) return true
+  const s = formatValue(value).toLowerCase()
+  return (
+    s.includes("en cours") ||
+    s.includes("pending") ||
+    s.includes("attente") ||
+    s.includes("waiting") ||
+    s.includes("processing") ||
+    s.includes("in corso")
+  )
+}
+
+/** Vide → rouge ; en cours → jaune ; fichier ou autre valeur renseignée → vert. */
+function languageCertificateTraffic(value: FieldValue): "green" | "yellow" | "red" {
+  if (!hasValue(value)) return "red"
+  if (languageCertificateIsFileAttachment(value)) return "green"
+  const s = formatValue(value).toLowerCase()
+  if (s.includes("not started") || s.includes("non commencé") || s === "no" || s === "non" || s.includes("pas encore")) {
+    return "red"
+  }
+  if (languageCertificateInProgressText(value)) return "yellow"
+  return "green"
+}
+
+function languageCertificateStepBadge(value: FieldValue): { text: string; className: string } {
+  const t = languageCertificateTraffic(value)
+  if (t === "red") {
+    return { text: "Non renseigné", className: "bg-red-500/15 text-red-800 dark:text-red-300" }
+  }
+  if (t === "yellow") {
+    return { text: "En cours", className: "bg-yellow-500/20 text-yellow-900 dark:text-yellow-200" }
+  }
+  return { text: "Reçu", className: "bg-green-500/20 text-green-700 dark:text-green-400" }
+}
+
+/** Pour métriques profil : étape comptée « faite » seulement si statut vert (reçu / validé). */
+export function isLanguageCertificateComplete(value: unknown): boolean {
+  return languageCertificateTraffic(value as FieldValue) === "green"
+}
+
 // Helper function to determine timeline icon color for a block
-const getTimelineIconColor = (block: BlockData): "green" | "yellow" | "red" => {
+const getTimelineIconColor = (block: BlockData, admissionData: AdmissionData): "green" | "yellow" | "red" => {
+  if (block.id === "proposal") {
+    return proposalDocumentPresent(admissionData) ? "green" : "red"
+  }
+  if (block.id === "reglement") {
+    return contractDocumentPresent(admissionData) ? "green" : "red"
+  }
+  if (block.id === "languageCertificate") {
+    return languageCertificateTraffic(admissionData.languageCertificate)
+  }
+
   const fieldsWithValues = block.fields.filter(field => hasValue(field.value))
   const completedFields = block.fields.filter(field => isCompleted(field.value))
   const inProgressFields = block.fields.filter(field => isInProgress(field.value))
@@ -170,43 +258,23 @@ const getTimelineIconColor = (block: BlockData): "green" | "yellow" | "red" => {
   return "red"
 }
 
-export default function AdmissionDetails({ open, onOpenChange, admissionData }: AdmissionDetailsProps) {
-  if (!admissionData) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Admission Details</DialogTitle>
-            <DialogDescription>Track all steps of your admission process</DialogDescription>
-          </DialogHeader>
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">No admission details available at this time.</p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    )
-  }
-
-  // Define the 5 blocks
-  const blocks: BlockData[] = [
+function buildAdmissionBlocks(admissionData: AdmissionData): BlockData[] {
+  return [
     {
       id: "proposal",
       title: "Proposal",
       icon: <FileText className="w-6 h-6" />,
-      mainField: admissionData.proposalStatus || admissionData.proposal,
-      fields: [
-        { label: "Proposal Document", value: admissionData.proposalDocument },
-        { label: "Proposal Status", value: admissionData.proposalStatus || admissionData.proposal },
-      ],
+      mainField: undefined,
+      fields: [{ label: "Proposal Document", value: admissionData.proposalDocument }],
     },
     {
-      id: "paiement",
-      title: "Payment",
-      icon: <CreditCard className="w-6 h-6" />,
-      mainField: admissionData.finalPaiement || admissionData.paymentAcceptanceFees,
+      id: "reglement",
+      title: "Règlement",
+      icon: <FileSignature className="w-6 h-6" />,
+      mainField: undefined,
       fields: [
-        { label: "Upfront Paiement", value: admissionData.upfrontPaiement || admissionData.paymentFirstRate },
-        { label: "Acceptance Paiement", value: admissionData.finalPaiement || admissionData.paymentAcceptanceFees },
+        { label: "Contrat", value: admissionData.contractDocument },
+        { label: "Email for application", value: admissionData.emailForApplication },
       ],
     },
     {
@@ -222,33 +290,69 @@ export default function AdmissionDetails({ open, onOpenChange, admissionData }: 
       ],
     },
     {
+      id: "languageCertificate",
+      title: "Language certificate",
+      icon: <Languages className="w-6 h-6" />,
+      mainField: undefined,
+      fields: [{ label: "Language Certificate", value: admissionData.languageCertificate }],
+    },
+    {
       id: "requirements",
       title: "Requirements",
       icon: <CheckCircle className="w-6 h-6" />,
       mainField: admissionData.accountUniversitaly || admissionData.accountPrenotami,
       fields: [
-        { label: "Email for application", value: admissionData.emailForApplication },
         { label: "Account Universitaly", value: admissionData.accountUniversitaly },
         { label: "Account Prenotami", value: admissionData.accountPrenotami },
       ],
     },
     {
       id: "application",
-      title: "Application",
+      title: "Par candidature",
       icon: <GraduationCap className="w-6 h-6" />,
       mainField: admissionData.applicationUniversity || admissionData.application,
-      fields: [
-        { label: "Application status", value: admissionData.applicationUniversity || admissionData.application },
-      ],
+      fields: [],
     },
   ]
+}
 
-  // Determine current step for timeline
+/** Same timeline + cards as the admission dialog, for use on `/student_italy/admission`. */
+export function AdmissionDetailsContent({
+  admissionData,
+  prospectId,
+}: {
+  admissionData?: AdmissionData
+  prospectId?: string
+}) {
+  const [candidaturesOpen, setCandidaturesOpen] = useState(false)
+
+  if (!admissionData) {
+    return (
+      <div className="py-10 text-center">
+        <p className="text-sm text-muted-foreground">No admission details available at this time.</p>
+      </div>
+    )
+  }
+
+  const blocks = buildAdmissionBlocks(admissionData)
+
+  const blockLooksStartedOrDone = (block: BlockData): boolean => {
+    if (block.id === "proposal") {
+      return proposalDocumentPresent(admissionData)
+    }
+    if (block.id === "reglement") {
+      return contractDocumentPresent(admissionData)
+    }
+    if (block.id === "languageCertificate") {
+      return languageCertificateTraffic(admissionData.languageCertificate) !== "red"
+    }
+    const status = getStatusBadge(block.mainField)
+    return status.text === "Completed" || status.text === "In Progress"
+  }
+
   const getCurrentStep = (): number => {
     for (let i = 0; i < blocks.length; i++) {
-      const block = blocks[i]
-      const status = getStatusBadge(block.mainField)
-      if (status.text === "Completed" || status.text === "In Progress") {
+      if (blockLooksStartedOrDone(blocks[i])) {
         return i
       }
     }
@@ -256,75 +360,92 @@ export default function AdmissionDetails({ open, onOpenChange, admissionData }: 
   }
 
   const currentStep = getCurrentStep()
+  const progressDenominator = Math.max(1, blocks.length - 1)
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Admission Details</DialogTitle>
-          <DialogDescription>Track all steps of your admission process</DialogDescription>
-        </DialogHeader>
+    <>
+      <div className="mb-8 mt-2">
+        <div className="relative flex items-center justify-between">
+          <div className="absolute left-0 right-0 top-5 h-0.5 bg-border" />
+          <div
+            className="absolute left-0 top-5 h-0.5 bg-primary transition-all duration-300"
+            style={{ width: `${(currentStep / progressDenominator) * 100}%` }}
+          />
 
-        {/* Timeline Bar */}
-        <div className="mt-6 mb-8">
-          <div className="flex items-center justify-between relative">
-            {/* Progress line */}
-            <div className="absolute top-5 left-0 right-0 h-0.5 bg-border" />
-            <div
-              className="absolute top-5 left-0 h-0.5 bg-primary transition-all duration-300"
-              style={{ width: `${(currentStep / (blocks.length - 1)) * 100}%` }}
-            />
-            
-            {/* Step indicators */}
-            {blocks.map((block, index) => {
-              const iconColor = getTimelineIconColor(block)
-              const colorClasses = {
-                green: "bg-green-500 border-green-500 text-white",
-                yellow: "bg-yellow-500 border-yellow-500 text-white",
-                red: "bg-red-500 border-red-500 text-white",
-              }
-              return (
-                <div key={block.id} className="relative z-10 flex flex-col items-center">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${colorClasses[iconColor]}`}
-                  >
-                    {block.icon}
-                  </div>
-                  <span className="mt-2 text-xs font-medium text-center max-w-[80px]">
-                    {block.title}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Blocks Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
           {blocks.map((block) => {
-            const status = getStatusBadge(block.mainField)
+            const iconColor = getTimelineIconColor(block, admissionData)
+            const colorClasses = {
+              green: "border-green-500 bg-green-500 text-white",
+              yellow: "border-yellow-500 bg-yellow-500 text-white",
+              red: "border-red-500 bg-red-500 text-white",
+            }
             return (
-              <Card key={block.id} className="p-6 border-2 hover:shadow-lg transition-shadow">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                    {block.icon}
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground">{block.title}</h3>
+              <div key={block.id} className="relative z-10 flex flex-col items-center">
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${colorClasses[iconColor]}`}
+                >
+                  {block.icon}
                 </div>
+                <span
+                  className={`mt-2 text-center text-xs font-medium ${block.id === "application" ? "max-w-[100px]" : "max-w-[80px]"}`}
+                >
+                  {block.title}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
 
-                {/* Status Badge */}
-                <div className="mb-4">
-                  <span className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${status.className}`}>
-                    {status.text}
-                  </span>
+      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {blocks.map((block) => {
+          const status =
+            block.id === "proposal"
+              ? proposalStepBadge(admissionData)
+              :             block.id === "reglement"
+                ? reglementStepBadge(admissionData)
+                : block.id === "languageCertificate"
+                  ? languageCertificateStepBadge(admissionData.languageCertificate)
+                  : getStatusBadge(block.mainField)
+          return (
+            <Card key={block.id} className="border-2 p-6 transition-shadow hover:shadow-lg">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="rounded-lg bg-primary/10 p-2 text-primary">{block.icon}</div>
+                <h3 className="text-lg font-semibold text-foreground">{block.title}</h3>
+              </div>
+
+              <div className="mb-4">
+                <span className={`inline-block rounded-full px-4 py-2 text-sm font-semibold ${status.className}`}>
+                  {status.text}
+                </span>
+              </div>
+
+              {block.id === "application" ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Ouvrez le tableau pour voir le détail de vos candidatures (université, formation, statut).
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                    disabled={!prospectId}
+                    onClick={() => setCandidaturesOpen(true)}
+                  >
+                    Afficher
+                  </Button>
                 </div>
-
-                {/* Fields */}
+              ) : (
                 <div className="space-y-2">
                   {block.fields.map((field, index) => {
                     const fieldValue = formatValue(field.value)
-                    const isFileField = field.label === "Proposal Document" && isFileAttachment(field.value)
-                    
+                    const isFileField =
+                      (field.label === "Proposal Document" ||
+                        field.label === "Contrat" ||
+                        field.label === "Language Certificate") &&
+                      isFileAttachment(field.value)
+
                     return (
                       <div key={index} className="text-sm">
                         <span className="font-medium text-muted-foreground">{field.label}:</span>{" "}
@@ -337,15 +458,15 @@ export default function AdmissionDetails({ open, onOpenChange, admissionData }: 
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 download={file.filename}
-                                className="inline-flex items-center gap-2 text-primary hover:text-primary/80 underline cursor-pointer transition-colors"
+                                className="inline-flex cursor-pointer items-center gap-2 text-primary underline transition-colors hover:text-primary/80"
                               >
-                                <FileText className="w-4 h-4" />
+                                <FileText className="h-4 w-4" />
                                 <span>{file.filename}</span>
                               </a>
                             ))}
                           </div>
                         ) : (
-                          <span className={fieldValue === "—" ? "text-muted-foreground italic" : "text-foreground"}>
+                          <span className={fieldValue === "—" ? "italic text-muted-foreground" : "text-foreground"}>
                             {fieldValue}
                           </span>
                         )}
@@ -353,10 +474,32 @@ export default function AdmissionDetails({ open, onOpenChange, admissionData }: 
                     )
                   })}
                 </div>
-              </Card>
-            )
-          })}
-        </div>
+              )}
+            </Card>
+          )
+        })}
+      </div>
+
+      {prospectId ? (
+        <ViewApplications
+          open={candidaturesOpen}
+          onOpenChange={setCandidaturesOpen}
+          prospectId={prospectId}
+        />
+      ) : null}
+    </>
+  )
+}
+
+export default function AdmissionDetails({ open, onOpenChange, admissionData, prospectId }: AdmissionDetailsProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">Admission Details</DialogTitle>
+          <DialogDescription>Track all steps of your admission process</DialogDescription>
+        </DialogHeader>
+        <AdmissionDetailsContent admissionData={admissionData} prospectId={prospectId} />
       </DialogContent>
     </Dialog>
   )

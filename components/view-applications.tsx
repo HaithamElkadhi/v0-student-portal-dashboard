@@ -108,14 +108,14 @@ export default function ViewApplications({ open, onOpenChange, prospectId }: Vie
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Applications</DialogTitle>
-          <DialogDescription>View all your university applications</DialogDescription>
+          <DialogTitle className="text-2xl font-bold">Candidatures</DialogTitle>
+          <DialogDescription>Détail de vos candidatures par université et formation</DialogDescription>
         </DialogHeader>
 
         <div className="mt-6">
           {loading ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">Loading applications...</p>
+              <p className="text-muted-foreground">Chargement…</p>
             </div>
           ) : error ? (
             <div className="text-center py-8">
@@ -123,7 +123,7 @@ export default function ViewApplications({ open, onOpenChange, prospectId }: Vie
             </div>
           ) : applications.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">No applications found.</p>
+              <p className="text-muted-foreground">Aucune candidature trouvée.</p>
             </div>
           ) : (
             <div className="rounded-md border">

@@ -16,15 +16,6 @@ const textSecondary = "var(--payment-text-secondary)"
 const bgSecondary = "var(--payment-bg-secondary)"
 const borderTertiary = "var(--payment-border-tertiary)"
 
-function CreditCardIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M2 10h20" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  )
-}
-
 function WarningCircleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -77,13 +68,6 @@ export function PaymentTable({ payments, onInvoiceOpen }: PaymentTableProps) {
 
   return (
     <section>
-      <div className="mb-3 flex items-center gap-2 text-[var(--payment-text-secondary)]">
-        <CreditCardIcon className="shrink-0" />
-        <p className="text-[13px] font-medium" style={{ color: textPrimary }}>
-          Paiements
-        </p>
-      </div>
-
       {urgent ? (
         <div
           className="mb-4 flex items-start gap-2.5 rounded-lg border-[0.5px] px-3.5 py-2.5"
@@ -100,10 +84,7 @@ export function PaymentTable({ payments, onInvoiceOpen }: PaymentTableProps) {
         </div>
       ) : null}
 
-      <div
-        className="overflow-x-auto rounded-xl border-[0.5px] bg-white"
-        style={{ borderColor: borderTertiary, marginBottom: 20 }}
-      >
+      <div className="overflow-x-auto">
         <table
           className="w-full min-w-[800px] table-fixed border-collapse text-left"
           style={{ tableLayout: "fixed" }}
@@ -157,7 +138,6 @@ export function PaymentTable({ payments, onInvoiceOpen }: PaymentTableProps) {
               return (
                 <tr
                   key={`${p.ref}-${idx}`}
-                  className="transition-colors hover:bg-[var(--payment-bg-secondary)]"
                   style={{
                     borderBottom: isLast ? "none" : `0.5px solid ${borderTertiary}`,
                     background: rowBg,
@@ -217,7 +197,7 @@ export function PaymentTable({ payments, onInvoiceOpen }: PaymentTableProps) {
                         href={p.invoiceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:bg-[#B5D4F4]"
+                        className="inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium"
                         style={{ background: "#E6F1FB", color: "#0C447C" }}
                       >
                         <DocIcon className="shrink-0 text-[#0C447C]" />
@@ -227,7 +207,7 @@ export function PaymentTable({ payments, onInvoiceOpen }: PaymentTableProps) {
                       <button
                         type="button"
                         onClick={() => onInvoiceOpen(p.ref, p.invoiceRef!)}
-                        className="inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors hover:bg-[#B5D4F4]"
+                        className="inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium"
                         style={{ background: "#E6F1FB", color: "#0C447C" }}
                       >
                         <DocIcon className="shrink-0 text-[#0C447C]" />

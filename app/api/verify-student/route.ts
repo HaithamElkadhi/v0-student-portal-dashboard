@@ -239,6 +239,37 @@ export async function POST(request: NextRequest) {
         // Bloc 1 - Proposal
         proposalDocument: getFileAttachments(["Proposal_Document", "Proposal Document", "proposal document", "Proposal_Document", "proposal_document"]) || getFieldValue(["Proposal_Document", "Proposal Document", "proposal document", "Proposal_Document", "proposal_document"]),
         proposalStatus: getFieldValue(["Proposal_Status", "Proposal Status", "proposal status", "proposal_status", "Proposal", "proposal"]),
+        // Contrat (prospects) — étape Règlement : fichier présent = étape passée
+        contractDocument:
+          getFileAttachments([
+            "Contrat",
+            "contrat",
+            "Contract",
+            "contract",
+            "File contrat",
+            "File Contrat",
+            "Fichier contrat",
+            "Contract File",
+            "contract file",
+            "Contract_Document",
+            "Contract Document",
+            "contract document",
+            "Contrat fichier",
+          ]) ||
+          getFieldValue([
+            "Contrat",
+            "contrat",
+            "Contract",
+            "contract",
+            "File contrat",
+            "File Contrat",
+            "Fichier contrat",
+            "Contract File",
+            "contract file",
+            "Contract_Document",
+            "Contract Document",
+            "contract document",
+          ]),
         // Bloc 2 - Paiement
         upfrontPaiement: getFieldValue(["UpFront_Paiement", "UpFront Paiement", "upfront paiement", "Upfront Paiement", "Upfront_Paiement", "Payment First Rate Admission", "payment first rate admission", "Payment First Rate", "payment first rate"]),
         finalPaiement: getFieldValue(["Final_Paiement", "Final Paiement", "final paiement", "final_paiement", "Payment Acceptance Fees", "payment acceptance fees", "Paiement Acceptance Fees", "paiement acceptance fees", "Acceptance Fees Payment", "acceptance fees payment"]),
@@ -247,6 +278,19 @@ export async function POST(request: NextRequest) {
         documentEvaluation: getFieldValue(["Document_Evaluation", "Document Evaluation", "document evaluation", "document_evaluation"]),
         translation: getFieldValue(["Translation", "translation"]),
         declarationOfValue: getFieldValue(["Declaration of value", "Declaration of Value", "declaration of value", "Declaration", "declaration"]),
+        languageCertificate:
+          getFileAttachments([
+            "Language Certificate",
+            "language certificate",
+            "Language certificate",
+            "Language_Certificate",
+          ]) ||
+          getFieldValue([
+            "Language Certificate",
+            "language certificate",
+            "Language certificate",
+            "Language_Certificate",
+          ]),
         // Bloc 4 - Requirement
         emailForApplication: (() => {
           // Use exact field name "Email For application" from Airtable Prospects table
