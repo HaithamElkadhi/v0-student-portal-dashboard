@@ -37,6 +37,7 @@ export interface AdmissionData {
   translation?: string | string[]
   declarationOfValue?: string | string[]
   languageCertificate?: string | string[] | FileAttachment[]
+  formulaireDossierOriginal?: string | string[]
   // Étapes (à lier précisément aux champs Airtable)
   dossierOriginal?: string | string[]
   traduction?: string | string[]
@@ -449,6 +450,15 @@ export function AdmissionDetailsContent({
   const currentStep = firstIncomplete === -1 ? blocks.length - 1 : firstIncomplete
   const safeSelectedStep = Math.min(selectedStep, Math.max(0, blocks.length - 1))
   const selectedBlock = blocks[safeSelectedStep] ?? blocks[0]
+  const dossierOriginalFormUrl = (() => {
+    const raw = admissionData.formulaireDossierOriginal
+    if (Array.isArray(raw)) {
+      const first = raw.find((v) => typeof v === "string" && v.trim().length > 0)
+      return first ? String(first).trim() : DOCUMENT_SUBMISSION_FORM_URL
+    }
+    if (typeof raw === "string" && raw.trim().length > 0) return raw.trim()
+    return DOCUMENT_SUBMISSION_FORM_URL
+  })()
 
   const getStepPreview = (block: BlockData): string => {
     if (block.id === "application") {
@@ -541,7 +551,9 @@ export function AdmissionDetailsContent({
                             className="h-7 border-emerald-300 bg-emerald-50 px-2.5 text-xs text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
                             onClick={() => {
                               if (typeof window !== "undefined") {
-                                window.open(DOCUMENT_SUBMISSION_FORM_URL, "_blank", "noopener,noreferrer")
+                                const urlToOpen =
+                                  block.id === "dossierOriginal" ? dossierOriginalFormUrl : DOCUMENT_SUBMISSION_FORM_URL
+                                window.open(urlToOpen, "_blank", "noopener,noreferrer")
                               }
                             }}
                           >

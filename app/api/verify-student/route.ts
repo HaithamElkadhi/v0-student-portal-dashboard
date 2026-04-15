@@ -302,6 +302,13 @@ export async function POST(request: NextRequest) {
             "Language certificate",
             "Language_Certificate",
           ]),
+        formulaireDossierOriginal: getFieldValue([
+          "Formulaire Dossier Original",
+          "formulaire dossier original",
+          "Formulaire dossier original",
+          "Dossier Original Form",
+          "dossier original form",
+        ]),
         // Bloc 4 - Requirement
         emailForApplication: (() => {
           // Use exact field name "Email For application" from Airtable Prospects table

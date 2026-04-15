@@ -14,6 +14,7 @@ export interface PortalAdmissionData {
   translation?: string | string[]
   declarationOfValue?: string | string[]
   languageCertificate?: unknown
+  formulaireDossierOriginal?: string | string[]
   emailForApplication?: string
   accountUniversitaly?: string | string[]
   accountPrenotami?: string | string[]
