@@ -38,6 +38,7 @@ export interface PortalStudentInfo {
   countryOfResidence?: string
   fullAddress?: string
   passportValidity?: string
+  numberApplications?: string | number
   photo?: unknown
   admission?: PortalAdmissionData
   accountStatus?: string

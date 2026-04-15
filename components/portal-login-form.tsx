@@ -16,6 +16,7 @@ export interface PortalStudentInfo {
   countryOfResidence?: string
   fullAddress?: string
   passportValidity?: string
+  numberApplications?: string | number
   photo?: unknown
   admission?: Record<string, unknown>
   accountStatus?: string
@@ -141,6 +142,7 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
           countryOfResidence: student.countryOfResidence,
           fullAddress: student.fullAddress,
           passportValidity: student.passportValidity,
+          numberApplications: student.numberApplications,
           photo: student.photo,
           admission: student.admission,
           accountStatus: student.accountStatus,

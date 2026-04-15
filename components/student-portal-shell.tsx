@@ -23,10 +23,22 @@ import { useStudentPortal } from "@/components/student-portal-context"
 const HOME = "/student_italy"
 const PAYMENT = "/student_italy/paiement"
 const ADMISSION = "/student_italy/admission"
+const VISA = "/student_italy/visa"
+const SCHOLARSHIP = "/student_italy/bourse"
+const INTEGRATION = "/student_italy/integration"
 
-function pageLabel(isPayment: boolean, isAdmission: boolean): string {
+function pageLabel(
+  isPayment: boolean,
+  isAdmission: boolean,
+  isVisa: boolean,
+  isScholarship: boolean,
+  isIntegration: boolean,
+): string {
   if (isPayment) return "Paiements"
   if (isAdmission) return "Admission"
+  if (isVisa) return "Visa"
+  if (isScholarship) return "Bourse"
+  if (isIntegration) return "Intégration"
   return "Profil"
 }
 
@@ -51,6 +63,9 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
   const isHome = pathname === HOME || pathname === `${HOME}/`
   const isPayment = pathname === PAYMENT || pathname?.startsWith(`${PAYMENT}/`)
   const isAdmission = pathname === ADMISSION || pathname?.startsWith(`${ADMISSION}/`)
+  const isVisa = pathname === VISA || pathname?.startsWith(`${VISA}/`)
+  const isScholarship = pathname === SCHOLARSHIP || pathname?.startsWith(`${SCHOLARSHIP}/`)
+  const isIntegration = pathname === INTEGRATION || pathname?.startsWith(`${INTEGRATION}/`)
 
   const navItemBase =
     "relative flex w-full items-center gap-2.5 rounded-lg py-2 pl-2.5 pr-2 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--jx-terracotta)]/25"
@@ -72,6 +87,9 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
       (href === HOME && isHome && !href.includes("#")) ||
       (href === PAYMENT && isPayment) ||
       (href === ADMISSION && isAdmission) ||
+      (href === VISA && isVisa) ||
+      (href === SCHOLARSHIP && isScholarship) ||
+      (href === INTEGRATION && isIntegration) ||
       false
     return (
       <Link
@@ -88,29 +106,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
     )
   }
 
-  const NavAnchor = ({
-    hash,
-    children: label,
-    icon,
-  }: {
-    hash: string
-    children: ReactNode
-    icon: ReactNode
-  }) => (
-    <Link
-      href={`${HOME}${hash}`}
-      onClick={closeMenu}
-      className={cn(navItemBase, navItemIdle)}
-      prefetch={false}
-    >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-zinc-200/60 text-zinc-600">
-        {icon}
-      </span>
-      {label}
-    </Link>
-  )
-
-  const label = pageLabel(isPayment, isAdmission)
+  const label = pageLabel(isPayment, isAdmission, isVisa, isScholarship, isIntegration)
 
   return (
     <div className="min-h-screen scroll-smooth bg-zinc-100 font-sans antialiased text-zinc-900">
@@ -172,15 +168,15 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
             <NavLink href={ADMISSION} icon={<ClipboardList className={navIconClass} aria-hidden />}>
               Admission
             </NavLink>
-            <NavAnchor hash="#visa" icon={<Plane className={navIconClass} aria-hidden />}>
+            <NavLink href={VISA} icon={<Plane className={navIconClass} aria-hidden />}>
               Visa
-            </NavAnchor>
-            <NavAnchor hash="#scholarship" icon={<GraduationCap className={navIconClass} aria-hidden />}>
+            </NavLink>
+            <NavLink href={SCHOLARSHIP} icon={<GraduationCap className={navIconClass} aria-hidden />}>
               Bourse
-            </NavAnchor>
-            <NavAnchor hash="#integration" icon={<Globe className={navIconClass} aria-hidden />}>
+            </NavLink>
+            <NavLink href={INTEGRATION} icon={<Globe className={navIconClass} aria-hidden />}>
               Intégration
-            </NavAnchor>
+            </NavLink>
           </nav>
 
           <div className="mt-auto shrink-0 border-t border-zinc-100 p-2">

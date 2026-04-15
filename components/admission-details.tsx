@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -10,8 +10,10 @@ import {
 } from "@/components/ui/dialog"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, FileSignature, FolderOpen, CheckCircle, GraduationCap, Languages } from "lucide-react"
+import { FileText, FileSignature, FolderOpen, GraduationCap, Languages, CheckCircle, Eye, Upload } from "lucide-react"
 import ViewApplications from "@/components/view-applications"
+
+const DOCUMENT_SUBMISSION_FORM_URL = "https://airtable.com/appkqvTuc8F0AhWPp/pag7uq3j4JejxC28v/form"
 
 export interface FileAttachment {
   id: string
@@ -35,6 +37,12 @@ export interface AdmissionData {
   translation?: string | string[]
   declarationOfValue?: string | string[]
   languageCertificate?: string | string[] | FileAttachment[]
+  // Étapes (à lier précisément aux champs Airtable)
+  dossierOriginal?: string | string[]
+  traduction?: string | string[]
+  dossierTraduit?: string | string[]
+  decisionAdmission?: string | string[]
+  validationUniversitaly?: string | string[]
   // Bloc 4 - Requirement
   emailForApplication?: string
   accountUniversitaly?: string | string[]
@@ -65,6 +73,13 @@ interface BlockData {
     label: string
     value: string | string[] | FileAttachment[] | undefined
   }>
+}
+
+interface DossierOriginalInfo {
+  requiredDocuments: string
+  commentaire: string
+  evaluationDossier: string
+  statutDossier: string
 }
 
 // Helper function to check if value is file attachment
@@ -259,6 +274,11 @@ const getTimelineIconColor = (block: BlockData, admissionData: AdmissionData): "
 }
 
 function buildAdmissionBlocks(admissionData: AdmissionData): BlockData[] {
+  const dossierOriginalValue = admissionData.dossierOriginal ?? admissionData.admissionFolderDocuments
+  const traductionValue = admissionData.traduction ?? admissionData.translation
+  const decisionAdmissionValue = admissionData.decisionAdmission ?? admissionData.applicationUniversity
+  const validationUniversitalyValue = admissionData.validationUniversitaly ?? admissionData.accountUniversitaly
+
   return [
     {
       id: "proposal",
@@ -278,18 +298,6 @@ function buildAdmissionBlocks(admissionData: AdmissionData): BlockData[] {
       ],
     },
     {
-      id: "documents",
-      title: "Documents",
-      icon: <FolderOpen className="w-6 h-6" />,
-      mainField: admissionData.documentEvaluation,
-      fields: [
-        { label: "Content of folder", value: admissionData.admissionFolderDocuments },
-        { label: "Evaluation of folder", value: admissionData.documentEvaluation },
-        { label: "Translation status", value: admissionData.translation },
-        { label: "Declaration of value", value: admissionData.declarationOfValue },
-      ],
-    },
-    {
       id: "languageCertificate",
       title: "Language certificate",
       icon: <Languages className="w-6 h-6" />,
@@ -297,21 +305,46 @@ function buildAdmissionBlocks(admissionData: AdmissionData): BlockData[] {
       fields: [{ label: "Language Certificate", value: admissionData.languageCertificate }],
     },
     {
-      id: "requirements",
-      title: "Requirements",
-      icon: <CheckCircle className="w-6 h-6" />,
-      mainField: admissionData.accountUniversitaly || admissionData.accountPrenotami,
-      fields: [
-        { label: "Account Universitaly", value: admissionData.accountUniversitaly },
-        { label: "Account Prenotami", value: admissionData.accountPrenotami },
-      ],
+      id: "dossierOriginal",
+      title: "Dossier Original",
+      icon: <FolderOpen className="w-6 h-6" />,
+      mainField: dossierOriginalValue,
+      fields: [{ label: "Dossier Original", value: dossierOriginalValue }],
+    },
+    {
+      id: "traduction",
+      title: "Traduction",
+      icon: <Languages className="w-6 h-6" />,
+      mainField: traductionValue,
+      fields: [{ label: "Traduction", value: traductionValue }],
+    },
+    {
+      id: "dossierTraduit",
+      title: "Dossier Traduit",
+      icon: <FolderOpen className="w-6 h-6" />,
+      mainField: admissionData.dossierTraduit,
+      fields: [{ label: "Dossier Traduit", value: admissionData.dossierTraduit }],
     },
     {
       id: "application",
-      title: "Par candidature",
+      title: "Candidature",
       icon: <GraduationCap className="w-6 h-6" />,
       mainField: admissionData.applicationUniversity || admissionData.application,
       fields: [],
+    },
+    {
+      id: "decisionAdmission",
+      title: "Decision admission",
+      icon: <CheckCircle className="w-6 h-6" />,
+      mainField: decisionAdmissionValue,
+      fields: [{ label: "Decision admission", value: decisionAdmissionValue }],
+    },
+    {
+      id: "validationUniversitaly",
+      title: "Validation Universitaly",
+      icon: <CheckCircle className="w-6 h-6" />,
+      mainField: validationUniversitalyValue,
+      fields: [{ label: "Validation Universitaly", value: validationUniversitalyValue }],
     },
   ]
 }
@@ -325,6 +358,61 @@ export function AdmissionDetailsContent({
   prospectId?: string
 }) {
   const [candidaturesOpen, setCandidaturesOpen] = useState(false)
+  const [applicationsCount, setApplicationsCount] = useState<number | null>(null)
+  const [dossierOriginalInfo, setDossierOriginalInfo] = useState<DossierOriginalInfo | null>(null)
+  const [selectedStep, setSelectedStep] = useState(0)
+  const [detailsOpen, setDetailsOpen] = useState(false)
+
+  useEffect(() => {
+    if (!prospectId) {
+      setApplicationsCount(null)
+      return
+    }
+
+    let cancelled = false
+    fetch("/api/get-applications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prospectId }),
+    })
+      .then(async (res) => {
+        const data = (await res.json()) as { success?: boolean; applications?: unknown[] }
+        if (cancelled || !res.ok || !data.success) return
+        const count = Array.isArray(data.applications) ? data.applications.length : 0
+        if (!cancelled) setApplicationsCount(count)
+      })
+      .catch(() => {
+        if (!cancelled) setApplicationsCount(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [prospectId])
+
+  useEffect(() => {
+    if (!prospectId) {
+      setDossierOriginalInfo(null)
+      return
+    }
+    let cancelled = false
+    fetch("/api/dossier-original", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prospectId }),
+    })
+      .then(async (res) => {
+        const data = (await res.json()) as { success?: boolean; dossierOriginal?: DossierOriginalInfo | null }
+        if (cancelled || !res.ok || !data.success) return
+        if (!cancelled) setDossierOriginalInfo(data.dossierOriginal ?? null)
+      })
+      .catch(() => {
+        if (!cancelled) setDossierOriginalInfo(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [prospectId])
 
   if (!admissionData) {
     return (
@@ -336,149 +424,227 @@ export function AdmissionDetailsContent({
 
   const blocks = buildAdmissionBlocks(admissionData)
 
-  const blockLooksStartedOrDone = (block: BlockData): boolean => {
-    if (block.id === "proposal") {
-      return proposalDocumentPresent(admissionData)
-    }
-    if (block.id === "reglement") {
-      return contractDocumentPresent(admissionData)
-    }
-    if (block.id === "languageCertificate") {
-      return languageCertificateTraffic(admissionData.languageCertificate) !== "red"
-    }
-    const status = getStatusBadge(block.mainField)
-    return status.text === "Completed" || status.text === "In Progress"
-  }
-
-  const getCurrentStep = (): number => {
-    for (let i = 0; i < blocks.length; i++) {
-      if (blockLooksStartedOrDone(blocks[i])) {
-        return i
+  const getBlockTraffic = (block: BlockData): "green" | "yellow" | "red" => {
+    if (block.id === "dossierOriginal") {
+      const statut = dossierOriginalInfo?.statutDossier?.trim().toLowerCase() ?? ""
+      if (statut === "complet" || statut === "complete" || statut === "completed") {
+        return "green"
       }
     }
-    return 0
+    if (block.id === "application") {
+      if ((applicationsCount ?? 0) > 0) {
+        return "green"
+      }
+    }
+    return getTimelineIconColor(block, admissionData)
   }
 
-  const currentStep = getCurrentStep()
-  const progressDenominator = Math.max(1, blocks.length - 1)
+  const stepStates = blocks.map((b) => getBlockTraffic(b))
+  const totalSteps = Math.max(1, blocks.length)
+  const completedCount = stepStates.filter((s) => s === "green").length
+  const inProgressCount = stepStates.filter((s) => s === "yellow").length
+  const weightedDone = completedCount + inProgressCount * 0.5
+  const progressPct = Math.round((weightedDone / totalSteps) * 100)
+  const firstIncomplete = stepStates.findIndex((s) => s !== "green")
+  const currentStep = firstIncomplete === -1 ? blocks.length - 1 : firstIncomplete
+  const safeSelectedStep = Math.min(selectedStep, Math.max(0, blocks.length - 1))
+  const selectedBlock = blocks[safeSelectedStep] ?? blocks[0]
+
+  const getStepPreview = (block: BlockData): string => {
+    if (block.id === "application") {
+      return applicationsCount === null ? "Candidatures non chargées" : `${applicationsCount} candidature(s)`
+    }
+    if (block.id === "dossierOriginal") {
+      const s = dossierOriginalInfo?.statutDossier?.trim()
+      return s ? `Statut de dossier: ${s}` : "Statut de dossier non disponible"
+    }
+    const firstField = block.fields.find((f) => formatValue(f.value) !== "—")
+    if (!firstField) return "Information manquante"
+    const value = formatValue(firstField.value)
+    return value.length > 60 ? `${value.slice(0, 57)}...` : value
+  }
 
   return (
     <>
-      <div className="mb-8 mt-2">
-        <div className="relative flex items-center justify-between">
-          <div className="absolute left-0 right-0 top-5 h-0.5 bg-border" />
-          <div
-            className="absolute left-0 top-5 h-0.5 bg-primary transition-all duration-300"
-            style={{ width: `${(currentStep / progressDenominator) * 100}%` }}
-          />
-
-          {blocks.map((block) => {
-            const iconColor = getTimelineIconColor(block, admissionData)
-            const colorClasses = {
-              green: "border-green-500 bg-green-500 text-white",
-              yellow: "border-yellow-500 bg-yellow-500 text-white",
-              red: "border-red-500 bg-red-500 text-white",
-            }
-            return (
-              <div key={block.id} className="relative z-10 flex flex-col items-center">
-                <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all ${colorClasses[iconColor]}`}
-                >
-                  {block.icon}
-                </div>
-                <span
-                  className={`mt-2 text-center text-xs font-medium ${block.id === "application" ? "max-w-[100px]" : "max-w-[80px]"}`}
-                >
-                  {block.title}
-                </span>
-              </div>
-            )
-          })}
+      <Card className="border border-zinc-200 bg-white p-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 pb-3">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Admission timeline</p>
+            <p className="text-sm font-semibold text-zinc-900">
+              {completedCount}/{blocks.length} étapes complétées
+            </p>
+          </div>
+          <div className="w-full max-w-[240px]">
+            <div className="mb-1 flex items-center justify-between text-[11px] font-medium text-zinc-500">
+              <span>Progression</span>
+              <span>{progressPct}%</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200">
+              <div className="h-full rounded-full bg-[var(--jx-terracotta)]" style={{ width: `${progressPct}%` }} />
+            </div>
+          </div>
         </div>
-      </div>
 
-      <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {blocks.map((block) => {
-          const status =
-            block.id === "proposal"
-              ? proposalStepBadge(admissionData)
-              :             block.id === "reglement"
-                ? reglementStepBadge(admissionData)
-                : block.id === "languageCertificate"
-                  ? languageCertificateStepBadge(admissionData.languageCertificate)
-                  : getStatusBadge(block.mainField)
-          return (
-            <Card key={block.id} className="border-2 p-6 transition-shadow hover:shadow-lg">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="rounded-lg bg-primary/10 p-2 text-primary">{block.icon}</div>
-                <h3 className="text-lg font-semibold text-foreground">{block.title}</h3>
-              </div>
+        <div className="relative">
+          <ol className="space-y-3">
+            {blocks.map((block, index) => {
+              const state = getBlockTraffic(block)
+              const preview = getStepPreview(block)
+              const isCurrent = index === currentStep
+              const nodeClass =
+                state === "green"
+                  ? "border-emerald-600 bg-emerald-600 text-white"
+                  : state === "yellow"
+                    ? "border-amber-600 bg-amber-600 text-white"
+                    : "border-zinc-400 bg-white text-zinc-500"
 
-              <div className="mb-4">
-                <span className={`inline-block rounded-full px-4 py-2 text-sm font-semibold ${status.className}`}>
-                  {status.text}
-                </span>
-              </div>
-
-              {block.id === "application" ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    Ouvrez le tableau pour voir le détail de vos candidatures (université, formation, statut).
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full sm:w-auto"
-                    disabled={!prospectId}
-                    onClick={() => setCandidaturesOpen(true)}
+              return (
+                <li key={block.id} className="relative pl-10">
+                  {index < blocks.length - 1 ? (
+                    <span className="absolute left-[17px] top-8 h-[calc(100%+8px)] w-px bg-zinc-200" aria-hidden />
+                  ) : null}
+                  <span
+                    className={`absolute left-0 top-1.5 flex h-8 w-8 items-center justify-center rounded-full border-2 text-[11px] font-semibold ${nodeClass}`}
+                    aria-hidden
                   >
-                    Afficher
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {block.fields.map((field, index) => {
-                    const fieldValue = formatValue(field.value)
-                    const isFileField =
-                      (field.label === "Proposal Document" ||
-                        field.label === "Contrat" ||
-                        field.label === "Language Certificate") &&
-                      isFileAttachment(field.value)
-
-                    return (
-                      <div key={index} className="text-sm">
-                        <span className="font-medium text-muted-foreground">{field.label}:</span>{" "}
-                        {isFileField && field.value ? (
-                          <div className="mt-1 space-y-1">
-                            {(field.value as FileAttachment[]).map((file, fileIndex) => (
-                              <a
-                                key={file.id || fileIndex}
-                                href={file.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                download={file.filename}
-                                className="inline-flex cursor-pointer items-center gap-2 text-primary underline transition-colors hover:text-primary/80"
-                              >
-                                <FileText className="h-4 w-4" />
-                                <span>{file.filename}</span>
-                              </a>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className={fieldValue === "—" ? "italic text-muted-foreground" : "text-foreground"}>
-                            {fieldValue}
-                          </span>
-                        )}
+                    {index + 1}
+                  </span>
+                  <div
+                    className={`rounded-lg border px-3 py-2.5 sm:px-3.5 ${
+                      isCurrent ? "border-[var(--jx-terracotta)]/40 bg-[#fff9f5]" : "border-zinc-200 bg-white"
+                    }`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-zinc-900">{block.title}</p>
+                        <p className="mt-0.5 truncate text-xs text-zinc-500">{preview}</p>
                       </div>
-                    )
-                  })}
-                </div>
-              )}
-            </Card>
-          )
-        })}
-      </div>
+                      <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
+                        {block.id === "application" ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 border-blue-300 bg-blue-50 px-2.5 text-xs text-blue-700 hover:bg-blue-100 hover:text-blue-800"
+                            disabled={!prospectId}
+                            onClick={() => setCandidaturesOpen(true)}
+                          >
+                            <Eye className="mr-1 h-3.5 w-3.5" />
+                            Afficher mes candidatures
+                          </Button>
+                        ) : null}
+                        {(block.id === "dossierOriginal" || block.id === "dossierTraduit") ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 border-emerald-300 bg-emerald-50 px-2.5 text-xs text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+                            onClick={() => {
+                              if (typeof window !== "undefined") {
+                                window.open(DOCUMENT_SUBMISSION_FORM_URL, "_blank", "noopener,noreferrer")
+                              }
+                            }}
+                          >
+                            <Upload className="mr-1 h-3.5 w-3.5" />
+                            Soumettre mes documents
+                          </Button>
+                        ) : null}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 border-[var(--jx-terracotta)]/40 bg-[var(--jx-terracotta)] px-2.5 text-xs text-white hover:bg-[var(--jx-terracotta)]/90 hover:text-white"
+                          onClick={() => {
+                            setSelectedStep(index)
+                            setDetailsOpen(true)
+                          }}
+                        >
+                          <Eye className="mr-1 h-3.5 w-3.5" />
+                          Détail
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ol>
+        </div>
+      </Card>
+
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Étape {safeSelectedStep + 1} · {selectedBlock.title}</DialogTitle>
+            <DialogDescription>Détails complets de cette étape</DialogDescription>
+          </DialogHeader>
+
+          {selectedBlock.id === "application" ? (
+            <div className="space-y-3">
+              <p className="text-sm text-zinc-600">Consultez vos candidatures pour voir université, formation et statut.</p>
+              <div className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm">
+                <span className="font-medium text-zinc-500">Nombre de candidatures: </span>
+                <span className="font-semibold text-zinc-900">{applicationsCount === null ? "—" : applicationsCount}</span>
+              </div>
+            </div>
+          ) : selectedBlock.id === "dossierOriginal" ? (
+            <div className="space-y-2">
+              <div className="rounded-md border border-zinc-200 bg-zinc-50/70 px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Required documents</p>
+                <p className="mt-1 text-sm text-zinc-900">{dossierOriginalInfo?.requiredDocuments?.trim() || "—"}</p>
+              </div>
+              <div className="rounded-md border border-zinc-200 bg-zinc-50/70 px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Commentaire</p>
+                <p className="mt-1 text-sm text-zinc-900">{dossierOriginalInfo?.commentaire?.trim() || "—"}</p>
+              </div>
+              <div className="rounded-md border border-zinc-200 bg-zinc-50/70 px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Evaluation dossier</p>
+                <p className="mt-1 text-sm text-zinc-900">{dossierOriginalInfo?.evaluationDossier?.trim() || "—"}</p>
+              </div>
+              <div className="rounded-md border border-zinc-200 bg-zinc-50/70 px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Statut de dossier</p>
+                <p className="mt-1 text-sm text-zinc-900">{dossierOriginalInfo?.statutDossier?.trim() || "—"}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {selectedBlock.fields.map((field, index) => {
+                const fieldValue = formatValue(field.value)
+                const isFileField =
+                  (field.label === "Proposal Document" ||
+                    field.label === "Contrat" ||
+                    field.label === "Language Certificate") &&
+                  isFileAttachment(field.value)
+
+                return (
+                  <div key={index} className="rounded-md border border-zinc-200 bg-zinc-50/70 px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{field.label}</p>
+                    {isFileField && field.value ? (
+                      <div className="mt-1.5 flex flex-col gap-1">
+                        {(field.value as FileAttachment[]).map((file, fileIndex) => (
+                          <a
+                            key={file.id || fileIndex}
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download={file.filename}
+                            className="inline-flex items-center gap-2 text-sm text-[var(--jx-terracotta)] underline-offset-2 hover:underline"
+                          >
+                            <FileText className="h-4 w-4" />
+                            <span>{file.filename}</span>
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className={`mt-1 text-sm ${fieldValue === "—" ? "italic text-zinc-500" : "text-zinc-900"}`}>{fieldValue}</p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {prospectId ? (
         <ViewApplications

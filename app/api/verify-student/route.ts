@@ -212,6 +212,17 @@ export async function POST(request: NextRequest) {
       countryOfResidence: getFieldValue(["Country of Residence", "country of residence", "Residence Country", "residence country", "Country", "country"]),
       fullAddress: getFieldValue(["Full Address", "full address", "Address", "address", "Complete Address", "complete address"]),
       passportValidity: getFieldValue(["Passport Validity (months)", "Passport Validity (Months)", "passport validity (months)", "Passport Validity", "passport validity", "Passport Expiry", "passport expiry", "Passport Expiration", "passport expiration"]),
+      numberApplications: getFieldValue([
+        "Nombre Application",
+        "nombre application",
+        "nombre applications",
+        "Nombre applications",
+        "Nombre Applications",
+        "Number Applications",
+        "Number of Applications",
+        "number applications",
+        "number of applications",
+      ]),
       gender: getFieldValue(["Gender", "gender", "Sex", "sex"]),
       accountStatus: (() => {
         // Use exact field name "Account Status"

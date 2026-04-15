@@ -1,13 +1,12 @@
 "use client"
 
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, type ReactNode } from "react"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { ArrowUpRight, ClipboardList, Plane, GraduationCap, Globe } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useStudentPortal, type PortalAdmissionData } from "@/components/student-portal-context"
 import { isLanguageCertificateComplete } from "@/components/admission-details"
-import type { Payment } from "@/lib/payment-types"
 
 const ADMISSION_ROUTE = "/student_italy/admission"
 const ACCENT = "var(--jx-terracotta)"
@@ -159,67 +158,6 @@ function calculateAdmissionPercentage(admissionData?: PortalAdmissionData): numb
   return Math.round(completedWeight + startedWeight)
 }
 
-function admissionStepsRemaining(admissionData?: PortalAdmissionData): number {
-  if (!admissionData) return 10
-
-  const steps: Array<{ value: unknown; isCompleted: (v: unknown) => boolean }> = [
-    {
-      value: admissionData.proposal,
-      isCompleted: (v) =>
-        String(v || "")
-          .toLowerCase()
-          .includes("accepted") || String(v || "").toLowerCase().includes("signed"),
-    },
-    {
-      value: admissionData.paymentFirstRate,
-      isCompleted: (v) =>
-        String(v || "")
-          .toLowerCase()
-          .includes("paid") || String(v || "").toLowerCase().includes("exonerated"),
-    },
-    {
-      value: admissionData.contractDocument,
-      isCompleted: (_v) => contractStepDone(admissionData.contractDocument),
-    },
-    {
-      value: admissionData.languageCertificate,
-      isCompleted: (_v) => isLanguageCertificateComplete(admissionData.languageCertificate),
-    },
-    { value: admissionData.emailForApplication, isCompleted: (v) => Boolean(v && String(v).trim() !== "") },
-    {
-      value: admissionData.declarationOfValue,
-      isCompleted: (v) => String(v || "").toLowerCase().includes("done"),
-    },
-    {
-      value: admissionData.translation,
-      isCompleted: (v) => String(v || "").toLowerCase().includes("done"),
-    },
-    {
-      value: admissionData.admissionFolderDocuments,
-      isCompleted: (v) => Boolean(v && String(v).trim() !== ""),
-    },
-    {
-      value: admissionData.application,
-      isCompleted: (v) => String(v || "").toLowerCase().includes("accepted"),
-    },
-    {
-      value: admissionData.admissionPayment,
-      isCompleted: (v) => String(v || "").toLowerCase().includes("paid"),
-    },
-  ]
-
-  let remaining = 0
-  steps.forEach((step) => {
-    const hasValue = Array.isArray(step.value)
-      ? step.value.length > 0
-      : step.value != null && String(step.value).trim() !== ""
-    const values = Array.isArray(step.value) ? step.value : [step.value]
-    const done = hasValue && values.some((v) => step.isCompleted(v))
-    if (!done) remaining++
-  })
-  return remaining
-}
-
 function admissionSubtitle(pct: number): string {
   if (pct === 0) return "Constitution du dossier"
   if (pct < 40) return "Étapes initiales"
@@ -228,10 +166,29 @@ function admissionSubtitle(pct: number): string {
   return "Terminé"
 }
 
-function MetricCell({ value, label }: { value: ReactNode; label: string }) {
+function decisionColorClass(value: string): string {
+  const normalized = value.toLowerCase()
+  if (!normalized || normalized === "—") return "text-zinc-900"
+  if (/accepted|admis|admission confirm|approved|valid/i.test(normalized)) return "text-emerald-600"
+  if (/refused|rejected|denied|cancelled|canceled|declined/i.test(normalized)) return "text-rose-600"
+  if (/pending|en cours|review|processing|waiting|attente/i.test(normalized)) return "text-amber-600"
+  return "text-zinc-900"
+}
+
+function MetricCell({
+  value,
+  label,
+  valueClassName,
+}: {
+  value: ReactNode
+  label: string
+  valueClassName?: string
+}) {
   return (
     <div className="flex flex-col justify-center px-3 py-3 sm:px-4 sm:py-3.5">
-      <p className="text-2xl font-semibold tabular-nums tracking-tight text-zinc-900 sm:text-[1.75rem]">{value}</p>
+      <p className={cn("text-2xl font-semibold tabular-nums tracking-tight sm:text-[1.75rem]", valueClassName || "text-zinc-900")}>
+        {value}
+      </p>
       <p className="mt-1 text-[10px] font-medium uppercase leading-tight tracking-wide text-zinc-500">{label}</p>
     </div>
   )
@@ -239,7 +196,6 @@ function MetricCell({ value, label }: { value: ReactNode; label: string }) {
 
 export default function StudentDashboardHome() {
   const { studentInfo } = useStudentPortal()
-  const [pendingPayments, setPendingPayments] = useState<number | null>(null)
 
   const admissionPct = calculateAdmissionPercentage(studentInfo.admission)
   const displayName = coerceSingleLine(studentInfo.name)
@@ -254,38 +210,10 @@ export default function StudentDashboardHome() {
     return () => clearTimeout(t)
   }, [])
 
-  useEffect(() => {
-    const folderId = coerceSingleLine(studentInfo.folderId)
-    const email = coerceSingleLine(studentInfo.email)
-    if (!folderId && !email) {
-      setPendingPayments(0)
-      return
-    }
-    let cancelled = false
-    fetch("/api/payments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prospectId: folderId ?? "", email: email ?? "" }),
-    })
-      .then(async (res) => {
-        const data = (await res.json()) as { payments?: Payment[] }
-        if (!res.ok || cancelled) return
-        const list = Array.isArray(data.payments) ? data.payments : []
-        const n = list.filter((p) => p.status === "due" || p.status === "overdue").length
-        if (!cancelled) setPendingPayments(n)
-      })
-      .catch(() => {
-        if (!cancelled) setPendingPayments(null)
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [studentInfo.folderId, studentInfo.email])
-
-  const passportRaw = coerceSingleLine(studentInfo.passportValidity)
-  const passportMonths = passportRaw ? passportRaw.replace(/\D/g, "") || "—" : "—"
-  const dossierActif = coerceSingleLine(studentInfo.folderId) ? 1 : 0
-  const stepsLeft = admissionStepsRemaining(studentInfo.admission)
+  const passportValidity = coerceSingleLine(studentInfo.passportValidity) || "—"
+  const applicationsCount = coerceSingleLine(studentInfo.numberApplications) || "—"
+  const admissionDecision = coerceSingleLine(studentInfo.admission?.applicationUniversity) || "—"
+  const admissionDecisionColor = decisionColorClass(admissionDecision)
   const badge = regionBadge(studentInfo.citizenship, studentInfo.countryOfResidence)
 
   const ini = initials(studentInfo.name, studentInfo.surname)
@@ -358,11 +286,9 @@ export default function StudentDashboardHome() {
 
       {/* Stats — une carte, tons neutres uniquement */}
       <Card className="mb-4 divide-y divide-zinc-100 rounded-2xl border border-zinc-200/90 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:divide-x sm:divide-y-0">
-        <div className="grid grid-cols-2 sm:grid-cols-4">
-          <MetricCell value={passportMonths} label="Mois passeport" />
-          <MetricCell value={dossierActif} label="Dossier actif" />
-          <MetricCell value={stepsLeft} label="Étapes restantes" />
-          <MetricCell value={pendingPayments === null ? "—" : pendingPayments} label="Paiements en attente" />
+        <div className="grid grid-cols-1 sm:grid-cols-2">
+          <MetricCell value={applicationsCount} label="Nombre applications" />
+          <MetricCell value={admissionDecision} label="Décision admission" valueClassName={admissionDecisionColor} />
         </div>
       </Card>
 
@@ -412,9 +338,13 @@ export default function StudentDashboardHome() {
               <p className={denseLabel}>Résidence</p>
               <p className={cn(denseValue, "truncate")}>{coerceSingleLine(studentInfo.countryOfResidence) || "—"}</p>
             </div>
-            <div className="col-span-2 min-w-0 pt-1">
+            <div className="min-w-0 border-b border-zinc-100 pb-2.5">
+              <p className={denseLabel}>Validité passeport (mois)</p>
+              <p className={cn(denseValue, "truncate")}>{passportValidity}</p>
+            </div>
+            <div className="min-w-0 border-b border-zinc-100 pb-2.5">
               <p className={denseLabel}>Adresse</p>
-              <p className={cn(denseValue, "break-words")}>{coerceSingleLine(studentInfo.fullAddress) || "—"}</p>
+              <p className={cn(denseValue, "truncate")}>{coerceSingleLine(studentInfo.fullAddress) || "—"}</p>
             </div>
           </div>
         </Card>

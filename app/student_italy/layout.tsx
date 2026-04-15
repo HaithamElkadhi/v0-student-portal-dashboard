@@ -71,6 +71,7 @@ export default function StudentItalyLayout({ children }: { children: ReactNode }
           countryOfResidence: s.countryOfResidence,
           fullAddress: s.fullAddress,
           passportValidity: s.passportValidity,
+          numberApplications: s.numberApplications,
           photo: s.photo,
           admission: s.admission,
           accountStatus: s.accountStatus,
