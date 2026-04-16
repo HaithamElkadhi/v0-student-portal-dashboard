@@ -8,12 +8,70 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, FileSignature, FolderOpen, GraduationCap, Languages, CheckCircle, Eye, Upload } from "lucide-react"
+import { FileText, FileSignature, FolderOpen, GraduationCap, Languages, CheckCircle, Eye, Upload, BookOpen } from "lucide-react"
 import ViewApplications from "@/components/view-applications"
 
 const DOCUMENT_SUBMISSION_FORM_URL = "https://airtable.com/appkqvTuc8F0AhWPp/pag7uq3j4JejxC28v/form"
+
+/** Texte par étape — à remplir quand le contenu sera fourni. */
+const ADMISSION_STEP_INSTRUCTIONS: Partial<Record<string, string>> = {
+  proposal: `Cette étape correspond à un rendez-vous de consultation et d’orientation avec notre équipe : il s’agit d’un échange en visioconférence en tête-à-tête (one-to-one), en ligne, dans lequel nous prenons le temps de comprendre votre parcours et vos objectifs.
+
+Au cours de cet entretien, nous analysons votre profil académique et professionnel, recueillons vos préférences (ville, établissement, filière, calendrier, budget, etc.), puis nous répondons à toutes vos questions sur les études en Italie, les démarches et la suite du dossier.
+
+C’est le moment idéal pour aligner vos attentes avec les options réelles et poser les bases d’une stratégie d’admission claire.
+
+Pour prendre rendez-vous ou obtenir plus d’informations sur les disponibilités, contactez-nous au +39 352 088 0880.`,
+  reglement: `Il s’agit du contrat qui encadre notre collaboration, notamment le droit d’utilisation de vos données personnelles dans le cadre de votre dossier (conformité et transparence).
+
+C’est une étape simple : en général, vous recevez le document par e-mail ou par WhatsApp, vous le signez et nous le renvoyez comme indiqué.
+
+Une fois le contrat validé de notre côté, vous retrouvez la version finale en téléchargement depuis votre espace (ou le lien communiqué par l’équipe).`,
+  languageCertificate: `Les universités italiennes reconnaissent en général les certificats de langue suivants pour les formations en anglais (liste indicative — vérifiez toujours la fiche du programme choisi) :
+
+• IELTS Academic
+• TOEFL iBT (Internet-Based Test)
+• Cambridge English : B2 First (FCE), C1 Advanced (CAE), C2 Proficiency (CPE)
+• PTE Academic (Pearson)
+• Trinity College London : ISE II / ISE III (selon programmes)
+
+Si vous suivez ou préparez un cursus en italien, les certificats d’italien L2 les plus couramment acceptés sont :
+
+• CILS (Certificazione di Italiano come Lingua Straniera — Università per Stranieri di Siena)
+• CELI (Certificazione di conoscenza della lingua italiana — Università per Stranieri di Perugia)
+• PLIDA (Progetto Lingua Italiana Dante Alighieri)
+• Certificazione IT (Università Roma Tre)
+
+Le niveau exigé (souvent B2 pour l’italien, scores minimaux pour l’anglais) et la liste exacte des preuves acceptées sont fixés par chaque université et chaque appel ; votre conseiller peut vous confirmer le bon examen et la date limite pour votre dossier.`,
+  dossierOriginal: `Pour constituer votre dossier original, rassemblez notamment :
+
+• votre CV à jour ;
+• une pièce d’identité — de préférence le passeport (valide) ;
+• vos relevés de notes depuis le bac, et tous vos diplômes depuis le baccalauréat (bac, études supérieures, autre formation reconnue) ;
+• les certificats de formation ou d’expérience professionnelle dont vous disposez ;
+• vos attestations ou certificats de langue.
+
+Vous soumettez ces documents via le formulaire indiqué sur cette étape. Notre équipe les examine : après évaluation, nous vous communiquons la liste des pièces à faire traduire (étape « Traduction ») ainsi que, le cas échéant, la liste des documents manquants ou à compléter.`,
+  traduction: "",
+  dossierTraduit: "",
+  application: "",
+  decisionAdmission: "",
+  validationUniversitaly: "",
+}
+
+function instructionBodyForStep(stepId: string): string {
+  const custom = ADMISSION_STEP_INSTRUCTIONS[stepId]?.trim()
+  if (custom) return custom
+  return "Les instructions pour cette étape seront ajoutées prochainement."
+}
 
 export interface FileAttachment {
   id: string
@@ -363,6 +421,7 @@ export function AdmissionDetailsContent({
   const [dossierOriginalInfo, setDossierOriginalInfo] = useState<DossierOriginalInfo | null>(null)
   const [selectedStep, setSelectedStep] = useState(0)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [instructionStepId, setInstructionStepId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!prospectId) {
@@ -460,6 +519,8 @@ export function AdmissionDetailsContent({
     return DOCUMENT_SUBMISSION_FORM_URL
   })()
 
+  const instructionBlock = instructionStepId ? blocks.find((b) => b.id === instructionStepId) : null
+
   const getStepPreview = (block: BlockData): string => {
     if (block.id === "application") {
       return applicationsCount === null ? "Candidatures non chargées" : `${applicationsCount} candidature(s)`
@@ -475,7 +536,8 @@ export function AdmissionDetailsContent({
   }
 
   return (
-    <>
+    <TooltipProvider delayDuration={200}>
+      <>
       <Card className="border border-zinc-200 bg-white p-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 pb-3">
           <div>
@@ -520,60 +582,102 @@ export function AdmissionDetailsContent({
                     {index + 1}
                   </span>
                   <div
-                    className={`rounded-lg border px-3 py-2.5 sm:px-3.5 ${
+                    className={`@container/admission-step rounded-lg border px-3 py-2.5 sm:px-3.5 ${
                       isCurrent ? "border-[var(--jx-terracotta)]/40 bg-[#fff9f5]" : "border-zinc-200 bg-white"
                     }`}
                   >
-                    <div className="flex items-start gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-zinc-900">{block.title}</p>
-                        <p className="mt-0.5 truncate text-xs text-zinc-500">{preview}</p>
+                    <div className="flex min-w-0 flex-col gap-2.5 @[560px]/admission-step:flex-row @[560px]/admission-step:items-start @[560px]/admission-step:gap-2">
+                      <div className="min-w-0 w-full @[560px]/admission-step:flex-1">
+                        <p className="break-words text-xs font-semibold text-zinc-900">{block.title}</p>
+                        <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500 @[560px]/admission-step:truncate">{preview}</p>
                       </div>
-                      <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
+                      <div className="flex w-full min-w-0 flex-row flex-wrap items-center justify-end gap-1.5 @[560px]/admission-step:ml-auto @[560px]/admission-step:w-auto @[560px]/admission-step:shrink-0 @[560px]/admission-step:gap-2">
                         {block.id === "application" ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-7 border-blue-300 bg-blue-50 px-2.5 text-xs text-blue-700 hover:bg-blue-100 hover:text-blue-800"
-                            disabled={!prospectId}
-                            onClick={() => setCandidaturesOpen(true)}
-                          >
-                            <Eye className="mr-1 h-3.5 w-3.5" />
-                            Afficher mes candidatures
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className={!prospectId ? "inline-flex cursor-not-allowed" : "inline-flex"}>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-9 w-9 min-w-9 shrink-0 justify-center gap-0 border-blue-300 bg-blue-50 p-0 text-blue-700 hover:bg-blue-100 hover:text-blue-800 @[560px]/admission-step:h-7 @[560px]/admission-step:w-auto @[560px]/admission-step:min-w-0 @[560px]/admission-step:gap-1.5 @[560px]/admission-step:px-2.5"
+                                  disabled={!prospectId}
+                                  aria-label="Afficher mes candidatures"
+                                  onClick={() => setCandidaturesOpen(true)}
+                                >
+                                  <Eye className="h-4 w-4 shrink-0 @[560px]/admission-step:mr-1 @[560px]/admission-step:h-3.5 @[560px]/admission-step:w-3.5" />
+                                  <span className="sr-only @[560px]/admission-step:not-sr-only @[560px]/admission-step:inline">
+                                    Afficher mes candidatures
+                                  </span>
+                                </Button>
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Afficher mes candidatures</TooltipContent>
+                          </Tooltip>
                         ) : null}
                         {(block.id === "dossierOriginal" || block.id === "dossierTraduit") ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-7 border-emerald-300 bg-emerald-50 px-2.5 text-xs text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
-                            onClick={() => {
-                              if (typeof window !== "undefined") {
-                                const urlToOpen =
-                                  block.id === "dossierOriginal" ? dossierOriginalFormUrl : DOCUMENT_SUBMISSION_FORM_URL
-                                window.open(urlToOpen, "_blank", "noopener,noreferrer")
-                              }
-                            }}
-                          >
-                            <Upload className="mr-1 h-3.5 w-3.5" />
-                            Soumettre mes documents
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-9 w-9 min-w-9 shrink-0 justify-center gap-0 border-emerald-300 bg-emerald-50 p-0 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 @[560px]/admission-step:h-7 @[560px]/admission-step:w-auto @[560px]/admission-step:min-w-0 @[560px]/admission-step:gap-1.5 @[560px]/admission-step:px-2.5"
+                                aria-label="Soumettre mes documents"
+                                onClick={() => {
+                                  if (typeof window !== "undefined") {
+                                    const urlToOpen =
+                                      block.id === "dossierOriginal" ? dossierOriginalFormUrl : DOCUMENT_SUBMISSION_FORM_URL
+                                    window.open(urlToOpen, "_blank", "noopener,noreferrer")
+                                  }
+                                }}
+                              >
+                                <Upload className="h-4 w-4 shrink-0 @[560px]/admission-step:mr-1 @[560px]/admission-step:h-3.5 @[560px]/admission-step:w-3.5" />
+                                <span className="sr-only @[560px]/admission-step:not-sr-only @[560px]/admission-step:inline">
+                                  Soumettre mes documents
+                                </span>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Soumettre mes documents</TooltipContent>
+                          </Tooltip>
                         ) : null}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-7 border-[var(--jx-terracotta)]/40 bg-[var(--jx-terracotta)] px-2.5 text-xs text-white hover:bg-[var(--jx-terracotta)]/90 hover:text-white"
-                          onClick={() => {
-                            setSelectedStep(index)
-                            setDetailsOpen(true)
-                          }}
-                        >
-                          <Eye className="mr-1 h-3.5 w-3.5" />
-                          Détail
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-9 w-9 min-w-9 shrink-0 justify-center gap-0 border-violet-300 bg-violet-50 p-0 text-violet-800 hover:bg-violet-100 hover:text-violet-900 @[560px]/admission-step:h-7 @[560px]/admission-step:w-auto @[560px]/admission-step:min-w-0 @[560px]/admission-step:gap-1.5 @[560px]/admission-step:px-2.5"
+                              aria-label="Instruction"
+                              onClick={() => setInstructionStepId(block.id)}
+                            >
+                              <BookOpen className="h-4 w-4 shrink-0 @[560px]/admission-step:mr-1 @[560px]/admission-step:h-3.5 @[560px]/admission-step:w-3.5" />
+                              <span className="sr-only @[560px]/admission-step:not-sr-only @[560px]/admission-step:inline">
+                                Instruction
+                              </span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Instruction</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-9 w-9 min-w-9 shrink-0 justify-center gap-0 border-[var(--jx-terracotta)]/40 bg-[var(--jx-terracotta)] p-0 text-white hover:bg-[var(--jx-terracotta)]/90 hover:text-white @[560px]/admission-step:h-7 @[560px]/admission-step:w-auto @[560px]/admission-step:min-w-0 @[560px]/admission-step:gap-1.5 @[560px]/admission-step:px-2.5"
+                              aria-label="Détail"
+                              onClick={() => {
+                                setSelectedStep(index)
+                                setDetailsOpen(true)
+                              }}
+                            >
+                              <Eye className="h-4 w-4 shrink-0 @[560px]/admission-step:mr-1 @[560px]/admission-step:h-3.5 @[560px]/admission-step:w-3.5" />
+                              <span className="sr-only @[560px]/admission-step:not-sr-only @[560px]/admission-step:inline">Détail</span>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">Détail</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   </div>
@@ -583,6 +687,25 @@ export function AdmissionDetailsContent({
           </ol>
         </div>
       </Card>
+
+      <Dialog
+        open={instructionStepId !== null}
+        onOpenChange={(open) => {
+          if (!open) setInstructionStepId(null)
+        }}
+      >
+        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">
+              Instructions{instructionBlock ? ` · ${instructionBlock.title}` : ""}
+            </DialogTitle>
+            <DialogDescription>À lire avant de passer à l&apos;action sur cette étape.</DialogDescription>
+          </DialogHeader>
+          <div className="whitespace-pre-line text-sm leading-relaxed text-zinc-700">
+            {instructionStepId ? instructionBodyForStep(instructionStepId) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
@@ -665,7 +788,8 @@ export function AdmissionDetailsContent({
           prospectId={prospectId}
         />
       ) : null}
-    </>
+      </>
+    </TooltipProvider>
   )
 }
 
