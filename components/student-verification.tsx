@@ -105,7 +105,7 @@ export default function StudentVerification({ onSuccess, onBack, embedded = fals
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || "Verification failed. Please try again.")
+        setError(data.error || "Vérification échouée. Veuillez réessayer.")
         setLoading(false)
         return
       }
@@ -131,12 +131,12 @@ export default function StudentVerification({ onSuccess, onBack, embedded = fals
           accountStatus: student.accountStatus,
         })
       } else {
-        setError("Student not found. Please check your credentials.")
+        setError("Étudiant introuvable. Vérifiez vos informations.")
         setLoading(false)
       }
     } catch (err) {
       console.error("Verification error:", err)
-      setError("An error occurred during verification. Please try again.")
+      setError("Une erreur est survenue. Veuillez réessayer.")
       setLoading(false)
     }
   }
@@ -152,7 +152,7 @@ export default function StudentVerification({ onSuccess, onBack, embedded = fals
           className="mb-5 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4 shrink-0" aria-hidden />
-          Home
+          Accueil
         </button>
       ) : null}
 
@@ -164,9 +164,9 @@ export default function StudentVerification({ onSuccess, onBack, embedded = fals
             </div>
           ) : null}
           <div className="mb-6">
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">Sign in</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">Connexion</h2>
             <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-              Use the same email or folder ID we use in your file.
+              Utilisez l&apos;email ou le numéro de dossier de votre fichier.
             </p>
           </div>
 
@@ -181,7 +181,7 @@ export default function StudentVerification({ onSuccess, onBack, embedded = fals
               </span>
               <span className="min-w-0">
                 <span className="block text-sm font-medium text-foreground">Email</span>
-                <span className="block text-xs text-muted-foreground">Address on your application</span>
+                <span className="block text-xs text-muted-foreground">Adresse sur votre dossier</span>
               </span>
             </button>
 
@@ -194,8 +194,8 @@ export default function StudentVerification({ onSuccess, onBack, embedded = fals
                 <FolderInput className="size-[18px]" strokeWidth={2} aria-hidden />
               </span>
               <span className="min-w-0">
-                <span className="block text-sm font-medium text-foreground">Folder ID</span>
-                <span className="block text-xs text-muted-foreground">e.g. JEE-2024-00001</span>
+                <span className="block text-sm font-medium text-foreground">Numéro de dossier</span>
+                <span className="block text-xs text-muted-foreground">ex. JEE-2024-00001</span>
               </span>
             </button>
           </div>
@@ -212,7 +212,7 @@ export default function StudentVerification({ onSuccess, onBack, embedded = fals
             className="mb-5 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="size-4 shrink-0" aria-hidden />
-            Other sign-in option
+            Autre option de connexion
           </button>
 
           <Card className="border border-border/80 p-6 shadow-sm sm:p-7">
@@ -223,16 +223,16 @@ export default function StudentVerification({ onSuccess, onBack, embedded = fals
             ) : null}
             <div className="mb-6">
               <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                {loginMethod === "email" ? "Your email" : "Your folder ID"}
+                {loginMethod === "email" ? "Votre email" : "Votre numéro de dossier"}
               </h2>
-              <p className="mt-1.5 text-sm text-muted-foreground">We match this against our records.</p>
+              <p className="mt-1.5 text-sm text-muted-foreground">Nous vérifions cela dans notre base.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {loginMethod === "email" ? (
                 <div className="space-y-2">
                   <label htmlFor="sv-email" className="text-sm font-medium text-foreground">
-                    Email
+                    Adresse e-mail
                   </label>
                   <Input
                     id="sv-email"
@@ -248,7 +248,7 @@ export default function StudentVerification({ onSuccess, onBack, embedded = fals
               ) : (
                 <div className="space-y-2">
                   <label htmlFor="sv-folder" className="text-sm font-medium text-foreground">
-                    Folder ID
+                    Numéro de dossier
                   </label>
                   <Input
                     id="sv-folder"
@@ -274,7 +274,7 @@ export default function StudentVerification({ onSuccess, onBack, embedded = fals
                 disabled={loading || (loginMethod === "email" ? !formData.email : !formData.folderId)}
                 className="w-full"
               >
-                {loading ? "Checking…" : "Continue"}
+                {loading ? "Vérification…" : "Continuer"}
               </Button>
             </form>
           </Card>

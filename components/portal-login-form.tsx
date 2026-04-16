@@ -99,11 +99,11 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
     const eTrim = email.trim()
     const fTrim = folderId.trim()
     if (method === "email" && !eTrim) {
-      setError("Enter your email address.")
+      setError("Saisissez votre adresse e-mail.")
       return
     }
     if (method === "folder" && !fTrim) {
-      setError("Enter your folder ID.")
+      setError("Saisissez votre numéro de dossier.")
       return
     }
 
@@ -122,7 +122,7 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || "We could not verify those details. Try again.")
+        setError(data.error || "Nous n'avons pas pu vérifier ces informations. Réessayez.")
         setLoading(false)
         return
       }
@@ -148,11 +148,11 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
           accountStatus: student.accountStatus,
         })
       } else {
-        setError("No file matches those details.")
+        setError("Aucun dossier ne correspond à ces informations.")
         setLoading(false)
       }
     } catch {
-      setError("Something went wrong. Check your connection and try again.")
+      setError("Une erreur s'est produite. Vérifiez votre connexion et réessayez.")
       setLoading(false)
     }
   }
@@ -168,13 +168,13 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
       <div key={step} className="flex flex-col gap-[22px]">
         <header className="jx-seq-1 space-y-1.5">
           <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-[var(--jx-terracotta)]">
-            Student portal
+            Portail étudiant
           </p>
           <h2 className="text-[26px] font-medium leading-[1.25] tracking-tight text-[var(--jx-night)]">
-            Benvenuto. Let&apos;s track your <em className="font-normal not-italic text-[var(--jx-terracotta)]">journey.</em>
+            Benvenuto. Suivons votre <em className="font-normal not-italic text-[var(--jx-terracotta)]">parcours.</em>
           </h2>
           <p className="mt-1.5 text-[13px] font-normal leading-[1.6] text-[var(--jx-muted)]">
-            Verify your identity to access your admission, visa & scholarship dashboard.
+            Vérifiez votre identité pour accéder à votre espace admission, visa et bourse.
           </p>
         </header>
 
@@ -187,7 +187,7 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
                 </div>
                 <div>
                   <p className="text-[13px] font-medium text-[var(--jx-night)]">Email</p>
-                  <p className="mt-0.5 text-[11px] font-normal text-[var(--jx-muted)]">Registered address</p>
+                  <p className="mt-0.5 text-[11px] font-normal text-[var(--jx-muted)]">Adresse enregistrée</p>
                 </div>
               </button>
 
@@ -196,21 +196,21 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
                   <IconFolder />
                 </div>
                 <div>
-                  <p className="text-[13px] font-medium text-[var(--jx-night)]">Folder ID</p>
-                  <p className="mt-0.5 text-[11px] font-normal text-[var(--jx-muted)]">Unique number</p>
+                  <p className="text-[13px] font-medium text-[var(--jx-night)]">Numéro de dossier</p>
+                  <p className="mt-0.5 text-[11px] font-normal text-[var(--jx-muted)]">Numéro unique</p>
                 </div>
               </button>
             </div>
 
             <p className="jx-seq-6 text-center text-xs text-[var(--jx-hint)]">
-              Need help?{" "}
+              Besoin d&apos;aide ?{" "}
               <a
                 href="https://wa.me/393520880880"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-[var(--jx-terracotta)] no-underline transition-all hover:underline"
               >
-                Contact your advisor
+                Contacter votre conseiller
               </a>
             </p>
           </>
@@ -223,7 +223,7 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
                 className="mb-1 flex items-center gap-2 text-xs font-medium text-[var(--jx-terracotta)] transition-opacity hover:opacity-80"
               >
                 <IconArrowLeft className="shrink-0" />
-                Change sign-in option
+                Changer de méthode de connexion
               </button>
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-[22px]">
@@ -236,7 +236,7 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-[13px] font-medium text-[var(--jx-night)]">Email</p>
-                          <p className="mt-0.5 text-[11px] font-normal text-[var(--jx-muted)]">Registered address</p>
+                          <p className="mt-0.5 text-[11px] font-normal text-[var(--jx-muted)]">Adresse enregistrée</p>
                           <div className="jx-check-pop mt-2 flex justify-start">
                             <span
                               className="flex size-4 items-center justify-center rounded-full bg-[var(--jx-terracotta)]"
@@ -252,7 +252,7 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
                           htmlFor="portal-email"
                           className="mb-1.5 block text-xs font-medium text-[#5f5e5a]"
                         >
-                          Email address
+                          Adresse e-mail
                         </label>
                         <input
                           id="portal-email"
@@ -277,8 +277,8 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
                           <IconFolder />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-[13px] font-medium text-[var(--jx-night)]">Folder ID</p>
-                          <p className="mt-0.5 text-[11px] font-normal text-[var(--jx-muted)]">Unique number</p>
+                          <p className="text-[13px] font-medium text-[var(--jx-night)]">Numéro de dossier</p>
+                          <p className="mt-0.5 text-[11px] font-normal text-[var(--jx-muted)]">Numéro unique</p>
                           <div className="jx-check-pop mt-2 flex justify-start">
                             <span
                               className="flex size-4 items-center justify-center rounded-full bg-[var(--jx-terracotta)]"
@@ -291,7 +291,7 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
                       </div>
                       <div className="mt-4">
                         <label htmlFor="portal-folder" className="mb-1.5 block text-xs font-medium text-[#5f5e5a]">
-                          Folder ID
+                          Numéro de dossier
                         </label>
                         <input
                           id="portal-folder"
@@ -332,14 +332,14 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
                     ) : (
                       <>
                         <IconArrowRightWhite />
-                        Access my portal
+                        Accéder à mon portail
                       </>
                     )}
                   </button>
                 </div>
 
                 <div className="jx-seq-5 flex flex-wrap gap-x-[14px] gap-y-2">
-                  {["Secure access", "Real-time updates", "JEEXPERT certified"].map((label) => (
+                  {["Accès sécurisé", "Mises à jour en temps réel", "JEEXPERT certifié"].map((label) => (
                     <span
                       key={label}
                       className="flex items-center gap-2 text-[11px] font-normal text-[var(--jx-muted)]"
@@ -356,14 +356,14 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
             </div>
 
             <p className="jx-seq-6 text-center text-xs text-[var(--jx-hint)]">
-              Need help?{" "}
+              Besoin d&apos;aide ?{" "}
               <a
                 href="https://wa.me/393520880880"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-[var(--jx-terracotta)] no-underline transition-all hover:underline"
               >
-                Contact your advisor
+                Contacter votre conseiller
               </a>
             </p>
           </>

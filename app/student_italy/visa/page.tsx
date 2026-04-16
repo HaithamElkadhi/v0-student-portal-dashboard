@@ -10,7 +10,7 @@ export default function StudentItalyVisaPage() {
         </span>
         <div>
           <h1 className="text-lg font-semibold text-zinc-900">Visa</h1>
-          <p className="mt-1 text-sm text-zinc-600">Coming soon.</p>
+          <p className="mt-1 text-sm text-zinc-600">Bientôt disponible.</p>
         </div>
       </div>
     </Card>

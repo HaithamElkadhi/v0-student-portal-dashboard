@@ -65,17 +65,17 @@ export default function ViewApplications({ open, onOpenChange, prospectId }: Vie
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch applications")
+        throw new Error(data.error || "Impossible de charger les candidatures")
       }
 
       if (data.success) {
         setApplications(data.applications || [])
       } else {
-        throw new Error(data.error || "Failed to fetch applications")
+        throw new Error(data.error || "Impossible de charger les candidatures")
       }
     } catch (err) {
       console.error("Error fetching applications:", err)
-      setError(err instanceof Error ? err.message : "Failed to fetch applications")
+      setError(err instanceof Error ? err.message : "Impossible de charger les candidatures")
     } finally {
       setLoading(false)
     }
@@ -84,7 +84,7 @@ export default function ViewApplications({ open, onOpenChange, prospectId }: Vie
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString)
-      return date.toLocaleDateString("en-US", {
+      return date.toLocaleDateString("fr-FR", {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -130,14 +130,14 @@ export default function ViewApplications({ open, onOpenChange, prospectId }: Vie
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>University</TableHead>
-                    <TableHead>Course</TableHead>
-                    <TableHead>Course Language</TableHead>
-                    <TableHead>Degree Level</TableHead>
-                    <TableHead>Campus City</TableHead>
-                    <TableHead>Date of Candidacy</TableHead>
-                    <TableHead>Application Status</TableHead>
-                    <TableHead>Comment</TableHead>
+                    <TableHead>Université</TableHead>
+                    <TableHead>Formation</TableHead>
+                    <TableHead>Langue d&apos;enseignement</TableHead>
+                    <TableHead>Niveau de diplôme</TableHead>
+                    <TableHead>Ville du campus</TableHead>
+                    <TableHead>Date de candidature</TableHead>
+                    <TableHead>Statut</TableHead>
+                    <TableHead>Commentaire</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

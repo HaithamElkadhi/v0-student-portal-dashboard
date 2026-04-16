@@ -142,31 +142,31 @@ const getStatusBadge = (value: FieldValue): { text: string; className: string } 
   const strValue = formatValue(value).toLowerCase()
   
   if (!value || strValue === "—") {
-    return { text: "Missing", className: "bg-gray-500/20 text-gray-700 dark:text-gray-400" }
+    return { text: "Manquant", className: "bg-gray-500/20 text-gray-700 dark:text-gray-400" }
   }
-  
+
   // Check for completed/positive statuses
   if (isCompleted(value)) {
-    return { text: "Completed", className: "bg-green-500/20 text-green-700 dark:text-green-400" }
+    return { text: "Complété", className: "bg-green-500/20 text-green-700 dark:text-green-400" }
   }
-  
+
   // Check for in-progress statuses
   if (isInProgress(value)) {
-    return { text: "In Progress", className: "bg-blue-500/20 text-blue-700 dark:text-blue-400" }
+    return { text: "En cours", className: "bg-blue-500/20 text-blue-700 dark:text-blue-400" }
   }
-  
+
   // Check for rejected/negative statuses
   if (strValue.includes("rejected") || strValue.includes("refused")) {
-    return { text: "Rejected", className: "bg-red-500/20 text-red-700 dark:text-red-400" }
+    return { text: "Refusé", className: "bg-red-500/20 text-red-700 dark:text-red-400" }
   }
-  
+
   // Check for not started
   if (strValue.includes("not started") || strValue.includes("not-prepared") || strValue === "no") {
-    return { text: "Not Started", className: "bg-gray-500/20 text-gray-700 dark:text-gray-400" }
+    return { text: "Non commencé", className: "bg-gray-500/20 text-gray-700 dark:text-gray-400" }
   }
-  
+
   // Default: has value but status unclear
-  return { text: "In Progress", className: "bg-blue-500/20 text-blue-700 dark:text-blue-400" }
+  return { text: "En cours", className: "bg-blue-500/20 text-blue-700 dark:text-blue-400" }
 }
 
 /** Proposal : une seule étape = présence du document de proposition. */
@@ -283,10 +283,10 @@ function buildAdmissionBlocks(admissionData: AdmissionData): BlockData[] {
   return [
     {
       id: "proposal",
-      title: "Proposal",
+      title: "Proposition",
       icon: <FileText className="w-6 h-6" />,
       mainField: undefined,
-      fields: [{ label: "Proposal Document", value: admissionData.proposalDocument }],
+      fields: [{ label: "Document de proposition", value: admissionData.proposalDocument }],
     },
     {
       id: "reglement",
@@ -295,15 +295,15 @@ function buildAdmissionBlocks(admissionData: AdmissionData): BlockData[] {
       mainField: undefined,
       fields: [
         { label: "Contrat", value: admissionData.contractDocument },
-        { label: "Email for application", value: admissionData.emailForApplication },
+        { label: "Email de candidature", value: admissionData.emailForApplication },
       ],
     },
     {
       id: "languageCertificate",
-      title: "Language certificate",
+      title: "Certificat de langue",
       icon: <Languages className="w-6 h-6" />,
       mainField: undefined,
-      fields: [{ label: "Language Certificate", value: admissionData.languageCertificate }],
+      fields: [{ label: "Certificat de langue", value: admissionData.languageCertificate }],
     },
     {
       id: "dossierOriginal",
@@ -335,10 +335,10 @@ function buildAdmissionBlocks(admissionData: AdmissionData): BlockData[] {
     },
     {
       id: "decisionAdmission",
-      title: "Decision admission",
+      title: "Décision d'admission",
       icon: <CheckCircle className="w-6 h-6" />,
       mainField: decisionAdmissionValue,
-      fields: [{ label: "Decision admission", value: decisionAdmissionValue }],
+      fields: [{ label: "Décision d'admission", value: decisionAdmissionValue }],
     },
     {
       id: "validationUniversitaly",
@@ -418,7 +418,7 @@ export function AdmissionDetailsContent({
   if (!admissionData) {
     return (
       <div className="py-10 text-center">
-        <p className="text-sm text-muted-foreground">No admission details available at this time.</p>
+        <p className="text-sm text-muted-foreground">Aucun détail d&apos;admission disponible pour le moment.</p>
       </div>
     )
   }
@@ -479,7 +479,7 @@ export function AdmissionDetailsContent({
       <Card className="border border-zinc-200 bg-white p-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 pb-3">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Admission timeline</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-400">Calendrier d&apos;admission</p>
             <p className="text-sm font-semibold text-zinc-900">
               {completedCount}/{blocks.length} étapes complétées
             </p>
@@ -602,7 +602,7 @@ export function AdmissionDetailsContent({
           ) : selectedBlock.id === "dossierOriginal" ? (
             <div className="space-y-2">
               <div className="rounded-md border border-zinc-200 bg-zinc-50/70 px-3 py-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Required documents</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Documents requis</p>
                 <p className="mt-1 text-sm text-zinc-900">{dossierOriginalInfo?.requiredDocuments?.trim() || "—"}</p>
               </div>
               <div className="rounded-md border border-zinc-200 bg-zinc-50/70 px-3 py-2">
@@ -610,7 +610,7 @@ export function AdmissionDetailsContent({
                 <p className="mt-1 text-sm text-zinc-900">{dossierOriginalInfo?.commentaire?.trim() || "—"}</p>
               </div>
               <div className="rounded-md border border-zinc-200 bg-zinc-50/70 px-3 py-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Evaluation dossier</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Évaluation du dossier</p>
                 <p className="mt-1 text-sm text-zinc-900">{dossierOriginalInfo?.evaluationDossier?.trim() || "—"}</p>
               </div>
               <div className="rounded-md border border-zinc-200 bg-zinc-50/70 px-3 py-2">
@@ -674,8 +674,8 @@ export default function AdmissionDetails({ open, onOpenChange, admissionData, pr
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-6xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Admission Details</DialogTitle>
-          <DialogDescription>Track all steps of your admission process</DialogDescription>
+          <DialogTitle className="text-2xl font-bold">Détails d&apos;admission</DialogTitle>
+          <DialogDescription>Suivez toutes les étapes de votre processus d&apos;admission</DialogDescription>
         </DialogHeader>
         <AdmissionDetailsContent admissionData={admissionData} prospectId={prospectId} />
       </DialogContent>

@@ -9,8 +9,8 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   // <CHANGE> Updated metadata for JEEXPERT student portal
-  title: "JEEXPERT Student Portal",
-  description: "Track your admission, visa, scholarship, and integration journey",
+  title: "JEEXPERT Portail Étudiant",
+  description: "Suivez votre parcours d'admission, visa, bourse et intégration",
   generator: "v0.app",
   icons: {
     icon: [
@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <body className={`font-sans antialiased`}>
         {children}
         <Analytics />
