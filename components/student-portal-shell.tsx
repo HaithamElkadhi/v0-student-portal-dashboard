@@ -16,6 +16,7 @@ import {
   Menu,
   X,
   RefreshCw,
+  FileSignature,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useStudentPortal } from "@/components/student-portal-context"
@@ -26,6 +27,7 @@ const ADMISSION = "/student_italy/admission"
 const VISA = "/student_italy/visa"
 const SCHOLARSHIP = "/student_italy/bourse"
 const INTEGRATION = "/student_italy/integration"
+const REGLEMENT = "/student_italy/reglement"
 
 function pageLabel(
   isPayment: boolean,
@@ -33,12 +35,14 @@ function pageLabel(
   isVisa: boolean,
   isScholarship: boolean,
   isIntegration: boolean,
+  isReglement: boolean,
 ): string {
   if (isPayment) return "Paiements"
   if (isAdmission) return "Admission"
   if (isVisa) return "Visa"
   if (isScholarship) return "Bourse"
   if (isIntegration) return "Intégration"
+  if (isReglement) return "Règlement"
   return "Profil"
 }
 
@@ -66,6 +70,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
   const isVisa = pathname === VISA || pathname?.startsWith(`${VISA}/`)
   const isScholarship = pathname === SCHOLARSHIP || pathname?.startsWith(`${SCHOLARSHIP}/`)
   const isIntegration = pathname === INTEGRATION || pathname?.startsWith(`${INTEGRATION}/`)
+  const isReglement = pathname === REGLEMENT || pathname?.startsWith(`${REGLEMENT}/`)
 
   const navItemBase =
     "relative flex w-full items-center gap-2.5 rounded-lg py-2 pl-2.5 pr-2 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--jx-terracotta)]/25"
@@ -90,6 +95,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
       (href === VISA && isVisa) ||
       (href === SCHOLARSHIP && isScholarship) ||
       (href === INTEGRATION && isIntegration) ||
+      (href === REGLEMENT && isReglement) ||
       false
     return (
       <Link
@@ -106,7 +112,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
     )
   }
 
-  const label = pageLabel(isPayment, isAdmission, isVisa, isScholarship, isIntegration)
+  const label = pageLabel(isPayment, isAdmission, isVisa, isScholarship, isIntegration, isReglement)
 
   return (
     <div className="min-h-screen scroll-smooth bg-zinc-100 font-sans antialiased text-zinc-900">
@@ -176,6 +182,9 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
             </NavLink>
             <NavLink href={INTEGRATION} icon={<Globe className={navIconClass} aria-hidden />}>
               Intégration
+            </NavLink>
+            <NavLink href={REGLEMENT} icon={<FileSignature className={navIconClass} aria-hidden />}>
+              Règlement
             </NavLink>
           </nav>
 
