@@ -201,6 +201,7 @@ export async function POST(request: NextRequest) {
 
     const studentInfo = {
       id: record.id,
+      contratSigned: fields["Contrat_Signed"] === true,
       name: getFieldValue(["Name", "name"]),
       surname: getFieldValue(["Surname", "Last Name", "surname", "last name", "Last Name", "Family Name"]),
       email: getFieldValue(["Email", "email", "Email Address", "email address"]) || email || "",

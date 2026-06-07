@@ -43,6 +43,7 @@ export interface PortalStudentInfo {
   photo?: unknown
   admission?: PortalAdmissionData
   accountStatus?: string
+  contratSigned?: boolean
 }
 
 export interface StudentPortalContextValue {

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useStudentPortal } from "@/components/student-portal-context"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, FileText, Loader2 } from "lucide-react"
+import { CheckCircle, FileText, Loader2, ShieldCheck } from "lucide-react"
 
 const CONTRACT_SECTIONS = [
   {
@@ -61,8 +61,11 @@ const CONTRACT_SECTIONS = [
 export default function ReglementPage() {
   const { studentInfo, setStudentInfo } = useStudentPortal()
   const [loading, setLoading] = useState(false)
-  const [accepted, setAccepted] = useState(false)
+  const [justAccepted, setJustAccepted] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const alreadySigned = studentInfo.contratSigned === true
+  const signed = alreadySigned || justAccepted
 
   const handleAccept = async () => {
     setLoading(true)
@@ -81,26 +84,13 @@ export default function ReglementPage() {
         setError(data.error || "Une erreur est survenue.")
         return
       }
-      setAccepted(true)
+      setStudentInfo({ ...studentInfo, contratSigned: true })
+      setJustAccepted(true)
     } catch {
       setError("Une erreur réseau est survenue. Veuillez réessayer.")
     } finally {
       setLoading(false)
     }
-  }
-
-  if (accepted) {
-    return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-          <CheckCircle className="h-8 w-8 text-green-600" />
-        </div>
-        <h2 className="text-xl font-semibold text-zinc-900">Contrat accepté</h2>
-        <p className="max-w-sm text-sm text-zinc-500">
-          Votre acceptation a été enregistrée avec succès. JEEXPERT a été notifié.
-        </p>
-      </div>
-    )
   }
 
   return (
@@ -110,10 +100,16 @@ export default function ReglementPage() {
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--jx-terracotta)]/10">
           <FileText className="h-5 w-5 text-[var(--jx-terracotta)]" />
         </div>
-        <div>
+        <div className="flex-1">
           <h1 className="text-lg font-semibold text-zinc-900">Contrat de prestation de services</h1>
           <p className="text-xs text-zinc-500">JEEXPERT STUDY — Veuillez lire attentivement avant d'accepter</p>
         </div>
+        {signed && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+            <CheckCircle className="h-3.5 w-3.5" />
+            Signé
+          </span>
+        )}
       </div>
 
       {/* Contract card */}
@@ -138,30 +134,44 @@ export default function ReglementPage() {
         </div>
       </div>
 
-      {/* Accept section */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <p className="mb-4 text-sm text-zinc-600">
-          En cliquant sur <strong>J'accepte le contrat</strong>, vous confirmez avoir lu et accepté l'intégralité des
-          conditions du présent contrat de prestation de services JEEXPERT.
-        </p>
-        {error && (
-          <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
-        )}
-        <Button
-          onClick={handleAccept}
-          disabled={loading}
-          className="w-full bg-[var(--jx-terracotta)] text-white hover:bg-[var(--jx-terracotta)]/90 sm:w-auto"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Enregistrement…
-            </>
-          ) : (
-            "J'accepte le contrat"
+      {/* Accept / signed section */}
+      {signed ? (
+        <div className="flex items-center gap-4 rounded-xl border border-green-200 bg-green-50 p-5 shadow-sm">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-100">
+            <ShieldCheck className="h-5 w-5 text-green-600" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-green-800">Contrat signé</p>
+            <p className="text-xs text-green-600">
+              Vous avez déjà accepté ce contrat. Aucune action supplémentaire n'est requise.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <p className="mb-4 text-sm text-zinc-600">
+            En cliquant sur <strong>J'accepte le contrat</strong>, vous confirmez avoir lu et accepté l'intégralité des
+            conditions du présent contrat de prestation de services JEEXPERT.
+          </p>
+          {error && (
+            <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
           )}
-        </Button>
-      </div>
+          <Button
+            onClick={handleAccept}
+            disabled={loading}
+            className="w-full bg-[var(--jx-terracotta)] text-white hover:bg-[var(--jx-terracotta)]/90 sm:w-auto"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Enregistrement…
+              </>
+            ) : (
+              "J'accepte le contrat"
+            )}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

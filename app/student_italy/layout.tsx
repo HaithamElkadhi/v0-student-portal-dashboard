@@ -75,6 +75,7 @@ export default function StudentItalyLayout({ children }: { children: ReactNode }
           photo: s.photo,
           admission: s.admission,
           accountStatus: s.accountStatus,
+          contratSigned: s.contratSigned,
         })
       }
     } catch (e) {
