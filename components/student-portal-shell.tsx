@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   RefreshCw,
+  CalendarDays,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useStudentPortal } from "@/components/student-portal-context"
@@ -55,6 +56,8 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const closeMenu = () => setMenuOpen(false)
+  const bookingBase = process.env.NEXT_PUBLIC_BOOKING_URL || "https://book.jeexpert.com"
+  const bookingHref = bookingBase ? bookingBase.split("#")[0] + "#" + new URLSearchParams({ studentName: [studentInfo.name, studentInfo.surname].filter(Boolean).join(" "), email: studentInfo.email, phone: studentInfo.phone || studentInfo.whatsapp || "", meetingType: "Follow up" }).toString() : null
 
   useEffect(() => {
     if (menuOpen) {
@@ -165,6 +168,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
             <NavLink href={SCHOLARSHIP} icon={<GraduationCap className={navIconClass} aria-hidden />}>
               Bourse
             </NavLink>
+            {bookingHref && <a href={bookingHref} onClick={closeMenu} className={cn(navItemBase, navItemIdle)}><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-200/60 md:h-8 md:w-8"><CalendarDays className={navIconClass} /></span>Réserver un rendez-vous</a>}
             <NavLink href={INTEGRATION} icon={<Globe className={navIconClass} aria-hidden />}>
               Intégration
             </NavLink>
@@ -228,9 +232,10 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </div>
-      <nav aria-label="Navigation mobile" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-zinc-200 bg-white/95 px-3 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
+      <nav aria-label="Navigation mobile" className={cn("fixed inset-x-0 bottom-0 z-40 grid", bookingHref ? "grid-cols-4" : "grid-cols-3", " border-t border-zinc-200 bg-white/95 px-3 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden")}>
         <Link href={HOME} onClick={closeMenu} aria-current={isHome && !menuOpen ? "page" : undefined} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs font-medium", isHome && !menuOpen ? "text-[var(--jx-terracotta)]" : "text-zinc-500")}><House className="h-5 w-5" />Accueil</Link>
         <button type="button" aria-expanded={menuOpen} aria-controls="portal-sidebar" onClick={() => setMenuOpen(value => !value)} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs font-medium", menuOpen ? "text-[var(--jx-terracotta)]" : "text-zinc-500")}><Menu className="h-5 w-5" />Menu</button>
+        {bookingHref && <a href={bookingHref} onClick={closeMenu} className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs font-medium text-zinc-500"><CalendarDays className="h-5 w-5" />Rendez-vous</a>}
         <Link href={SUPPORT} onClick={closeMenu} aria-current={isSupport && !menuOpen ? "page" : undefined} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs font-medium", isSupport && !menuOpen ? "text-[var(--jx-terracotta)]" : "text-zinc-500")}><LifeBuoy className="h-5 w-5" />Support</Link>
       </nav>
     </div>
