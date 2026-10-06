@@ -3,8 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { AdmissionDetailsContent, type AdmissionData } from "@/components/admission-details"
-import { ArrowUpRight, CheckCircle2, ClipboardList, CreditCard, Mail, RefreshCw } from "lucide-react"
-import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { ArrowUpRight, CheckCircle2, ClipboardList, CreditCard, Activity, RefreshCw } from "lucide-react"
 import { useStudentPortal } from "@/components/student-portal-context"
 import type { Payment } from "@/lib/payment-types"
 import { formatMoney, formatDueDateLabel } from "@/lib/payment-utils"
@@ -14,6 +13,8 @@ type Summary = {
   decisions: { university: string; program: string; status: string }[]
   admitted: { university: string; program: string; status: string }[]
   scholarshipStatus: string; visaStatus: string; appointmentDate: string
+  activity: { key: string; kind: string; at: string; title: string; status?: string; appointmentAt?: string }[]; activityPartial: boolean
+  lastContactDate: string; lastContactReason: string
   mailCount: number | null; lastMail: { subject: string; date: string } | null
 }
 function Badge({ children, positive = false, warning = false, negative = false }: { children: ReactNode; positive?: boolean; warning?: boolean; negative?: boolean }) {
@@ -75,6 +76,17 @@ export default function StudentProfileSummary() {
         {paymentError ? <LoadError retry={retryLoad} /> : !payments ? <Loading /> : !due.length ? <p className="text-sm text-emerald-700">Aucun paiement à régler</p> : <ul className="divide-y divide-zinc-100">{due.map((payment,index) => <li key={payment.ref + index} className="py-3 first:pt-0 last:pb-0"><div className="flex items-start justify-between gap-3"><p className="min-w-0 break-words text-sm font-medium text-zinc-700">{payment.motif && payment.motif !== "—" ? payment.motif : "Paiement à régler"}</p><span className="shrink-0 text-sm font-semibold text-zinc-900">{formatMoney(payment.amount, payment.currency)}</span></div><p className={"mt-1 text-xs " + (payment.status === "overdue" ? "text-red-700" : "text-zinc-500")}>{payment.status === "overdue" ? "En retard · " : "Échéance · "}{payment.dueDate ? formatDueDateLabel(payment.dueDate) : "Date à confirmer"}</p></li>)}</ul>}
       </Panel>
     </div>
-    <Dialog><DialogTrigger asChild><button type="button" className="flex min-h-14 w-full items-center gap-3 rounded-xl border border-zinc-200 bg-white p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173B65]/30"><Mail className="h-4 w-4 shrink-0 text-zinc-500" /><div className="min-w-0 flex-1"><p className="text-sm font-medium text-zinc-700">Messages de votre conseiller</p><p className="mt-1 break-words text-xs text-zinc-500">{summaryError ? "Historique indisponible" : !summary ? "Chargement…" : summary.mailCount === null ? "Historique indisponible" : summary.mailCount ? `${summary.mailCount} envoi(s) enregistré(s)` : "Aucun envoi enregistré"}{summary?.lastMail ? " · " + summary.lastMail.subject : ""}</p></div><ArrowUpRight className="h-4 w-4 shrink-0 text-zinc-400" /></button></DialogTrigger><DialogContent className="w-[calc(100%-2rem)] rounded-2xl"><DialogTitle>Work in progress</DialogTitle><DialogDescription>Le détail des notifications mail sera bientôt disponible.</DialogDescription></DialogContent></Dialog>
+    <article className="rounded-xl border border-zinc-200 bg-white p-4">
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-700"><Activity className="h-4 w-4 text-zinc-500" aria-hidden />Activité</h2>
+      <div className="mt-3">{summaryError ? <LoadError retry={retryLoad} /> : !summary ? <Loading /> : <>
+        {summary.activityPartial && <p className="mb-3 text-xs text-amber-700">Certaines activités sont indisponibles. Actualisez pour réessayer.</p>}
+        {!summary.activity?.length ? <p className="text-sm text-zinc-500">Aucune activité enregistrée.</p> : <ol className="divide-y divide-zinc-100">{summary.activity.map(event => <li key={event.key} className="py-3 first:pt-0 last:pb-0">
+          <div className="flex flex-wrap items-center justify-between gap-2"><span className="rounded-full bg-zinc-100 px-2 py-1 text-xs text-zinc-600">{{ contact: "Contact", ticket: "Ticket", appointment: "Rendez-vous", email: "Email envoyé" }[event.kind] || "Activité"}</span><time className="text-xs text-zinc-400">{event.at && Number.isFinite(Date.parse(event.at)) ? new Date(event.at.length === 10 ? event.at + "T12:00:00+01:00" : event.at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Tunis" }) : "Date non renseignée"}</time></div>
+          <p className="mt-2 whitespace-pre-wrap break-words text-sm text-zinc-800">{event.title}</p>
+          {event.appointmentAt && <p className="mt-1 text-xs text-zinc-500">Prévu le {new Date(event.appointmentAt).toLocaleString("fr-FR", { timeZone: "Africa/Tunis", dateStyle: "medium", timeStyle: "short" })}</p>}
+          {event.status && event.kind !== "email" && <p className="mt-1 text-xs text-zinc-500">{{ Scheduled: "Planifié", Completed: "Terminé", Cancelled: "Annulé", "No-show": "Absent", Done: "Terminé", Archived: "Archivé", "In Progress": "En cours", Todo: "À traiter" }[event.status] || event.status}</p>}
+        </li>)}</ol>}
+      </>}</div>
+    </article>
   </section>
 }
