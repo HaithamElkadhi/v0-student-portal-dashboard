@@ -41,14 +41,14 @@ export async function POST(request: NextRequest) {
     // Query Airtable - encode table name properly
     const encodedTableId = encodeURIComponent(AIRTABLE_TABLE_ID)
     const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodedTableId}?filterByFormula=${encodeURIComponent(filterFormula)}`
-    
+
     console.log("Querying Airtable:", {
       baseId: AIRTABLE_BASE_ID,
       tableId: AIRTABLE_TABLE_ID,
       filterFormula,
       url: url.replace(AIRTABLE_API_KEY, "***"),
     })
-    
+
     const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${AIRTABLE_API_KEY}`,
@@ -59,14 +59,14 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorData = await response.text()
       let errorMessage = "Failed to verify student"
-      
+
       try {
         const errorJson = JSON.parse(errorData)
         errorMessage = errorJson.error?.message || errorJson.message || errorMessage
       } catch {
         errorMessage = errorData || errorMessage
       }
-      
+
       console.error("Airtable API error:", {
         status: response.status,
         statusText: response.statusText,
@@ -74,9 +74,9 @@ export async function POST(request: NextRequest) {
         url: url,
         tableId: AIRTABLE_TABLE_ID,
       })
-      
+
       return NextResponse.json(
-        { 
+        {
           error: errorMessage || "Failed to verify student",
           details: response.status === 403 ? "Access forbidden. Please check your API key permissions." : undefined
         },
@@ -118,13 +118,13 @@ export async function POST(request: NextRequest) {
           "Content-Type": "application/json",
         },
       })
-      
+
       if (schemaResponse.ok) {
         const schemaData = await schemaResponse.json()
         const prospectsTable = schemaData.tables?.find(
           (table: any) => table.name === AIRTABLE_TABLE_ID || table.id === AIRTABLE_TABLE_ID
         )
-        
+
         if (prospectsTable) {
           prospectsTable.fields?.forEach((field: any) => {
             schemaFields[field.name] = field.type
@@ -331,6 +331,23 @@ export async function POST(request: NextRequest) {
         paymentAcceptanceFees: getFieldValue(["Payment Acceptance Fees", "payment acceptance fees", "Paiement Acceptance Fees", "paiement acceptance fees", "Acceptance Fees Payment", "acceptance fees payment"]),
       },
     }
+
+    // Include saved language certificates in the admission timeline and home summary.
+    try {
+      const id = String(studentInfo.folderId ?? "")
+      if (/^[a-zA-Z0-9_-]+$/.test(id)) {
+        const folderUrl = new URL(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/tblLWLiwFS2Cn3sbo`)
+        folderUrl.searchParams.set("filterByFormula", '{Prospect ID}="' + id + '"')
+        folderUrl.searchParams.set("returnFieldsByFieldId", "true")
+        for (const field of ["fldfq3GHePP549ROj", "fldpJalULvbfdB5mg", "fldbNyWnYDNDHi7Kw"]) folderUrl.searchParams.append("fields[]", field)
+        const folderResponse = await fetch(folderUrl, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` }, cache: "no-store" })
+        if (folderResponse.ok) {
+          const folders = await folderResponse.json()
+          const attachments = (folders.records ?? []).flatMap((folder: any) => ["fldfq3GHePP549ROj", "fldpJalULvbfdB5mg", "fldbNyWnYDNDHi7Kw"].flatMap(field => folder.fields?.[field] ?? []))
+          if (attachments.length) studentInfo.admission.languageCertificate = attachments
+        }
+      }
+    } catch { console.error("Unable to refresh language certificates") }
 
     return NextResponse.json({
       success: true,

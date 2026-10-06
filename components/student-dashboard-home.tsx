@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, type ReactNode } from "react"
+import { useEffect } from "react"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
 import { ArrowUpRight, ClipboardList, Plane, GraduationCap, Globe } from "lucide-react"
+import StudentProfileSummary from "@/components/student-profile-summary"
 import { cn } from "@/lib/utils"
 import { useStudentPortal, type PortalAdmissionData } from "@/components/student-portal-context"
 import { isLanguageCertificateComplete } from "@/components/admission-details"
@@ -166,33 +167,7 @@ function admissionSubtitle(pct: number): string {
   return "Terminé"
 }
 
-function decisionColorClass(value: string): string {
-  const normalized = value.toLowerCase()
-  if (!normalized || normalized === "—") return "text-zinc-900"
-  if (/accepted|admis|admission confirm|approved|valid/i.test(normalized)) return "text-emerald-600"
-  if (/refused|rejected|denied|cancelled|canceled|declined/i.test(normalized)) return "text-rose-600"
-  if (/pending|en cours|review|processing|waiting|attente/i.test(normalized)) return "text-amber-600"
-  return "text-zinc-900"
-}
 
-function MetricCell({
-  value,
-  label,
-  valueClassName,
-}: {
-  value: ReactNode
-  label: string
-  valueClassName?: string
-}) {
-  return (
-    <div className="flex flex-col justify-center px-3 py-3 sm:px-4 sm:py-3.5">
-      <p className={cn("text-2xl font-semibold tabular-nums tracking-tight sm:text-[1.75rem]", valueClassName || "text-zinc-900")}>
-        {value}
-      </p>
-      <p className="mt-1 text-[10px] font-medium uppercase leading-tight tracking-wide text-zinc-500">{label}</p>
-    </div>
-  )
-}
 
 export default function StudentDashboardHome() {
   const { studentInfo } = useStudentPortal()
@@ -210,10 +185,6 @@ export default function StudentDashboardHome() {
     return () => clearTimeout(t)
   }, [])
 
-  const passportValidity = coerceSingleLine(studentInfo.passportValidity) || "—"
-  const applicationsCount = coerceSingleLine(studentInfo.numberApplications) || "—"
-  const admissionDecision = coerceSingleLine(studentInfo.admission?.applicationUniversity) || "—"
-  const admissionDecisionColor = decisionColorClass(admissionDecision)
   const badge = regionBadge(studentInfo.citizenship, studentInfo.countryOfResidence)
 
   const ini = initials(studentInfo.name, studentInfo.surname)
@@ -226,8 +197,6 @@ export default function StudentDashboardHome() {
         : null
 
   const scrollMainTop = "scroll-mt-20 md:scroll-mt-14"
-  const denseLabel = "text-[9px] font-semibold uppercase tracking-wide text-zinc-400"
-  const denseValue = "text-sm font-medium text-zinc-900"
 
   return (
     <>
@@ -284,70 +253,10 @@ export default function StudentDashboardHome() {
         </div>
       </Card>
 
-      {/* Stats — une carte, tons neutres uniquement */}
-      <Card className="mb-4 divide-y divide-zinc-100 rounded-2xl border border-zinc-200/90 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:divide-x sm:divide-y-0">
-        <div className="grid grid-cols-1 sm:grid-cols-2">
-          <MetricCell value={applicationsCount} label="Nombre applications" />
-          <MetricCell value={admissionDecision} label="Décision admission" valueClassName={admissionDecisionColor} />
-        </div>
-      </Card>
+      <StudentProfileSummary />
 
-      <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
-        <Card
-          id="profil"
-          className={cn(
-            "rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-5",
-            scrollMainTop,
-          )}
-        >
-          <p className="mb-3 border-l-[3px] border-[#009246] pl-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
-            Informations personnelles
-          </p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-            <div className="min-w-0 border-b border-zinc-100 pb-2.5">
-              <p className={denseLabel}>Prénom</p>
-              <p className={cn(denseValue, "truncate")}>{displayName || "—"}</p>
-            </div>
-            <div className="min-w-0 border-b border-zinc-100 pb-2.5">
-              <p className={denseLabel}>Nom</p>
-              <p className={cn(denseValue, "truncate")}>{coerceSingleLine(studentInfo.surname) || "—"}</p>
-            </div>
-            <div className="min-w-0 border-b border-zinc-100 pb-2.5">
-              <p className={denseLabel}>Genre</p>
-              <p className={denseValue}>{coerceSingleLine(studentInfo.gender) || "—"}</p>
-            </div>
-            <div className="min-w-0 border-b border-zinc-100 pb-2.5">
-              <p className={denseLabel}>Date de naissance</p>
-              <p className={denseValue}>
-                {studentInfo.birthday ? new Date(String(studentInfo.birthday)).toLocaleDateString("fr-FR") : "—"}
-              </p>
-            </div>
-            <div className="min-w-0 border-b border-zinc-100 pb-2.5">
-              <p className={denseLabel}>Téléphone</p>
-              <p className={cn(denseValue, "truncate")}>{coerceSingleLine(studentInfo.phone) || "—"}</p>
-            </div>
-            <div className="min-w-0 border-b border-zinc-100 pb-2.5">
-              <p className={denseLabel}>WhatsApp</p>
-              <p className={cn(denseValue, "truncate")}>{coerceSingleLine(studentInfo.whatsapp) || "—"}</p>
-            </div>
-            <div className="min-w-0 border-b border-zinc-100 pb-2.5">
-              <p className={denseLabel}>Nationalité</p>
-              <p className={cn(denseValue, "truncate")}>{coerceSingleLine(studentInfo.citizenship) || "—"}</p>
-            </div>
-            <div className="min-w-0 border-b border-zinc-100 pb-2.5">
-              <p className={denseLabel}>Résidence</p>
-              <p className={cn(denseValue, "truncate")}>{coerceSingleLine(studentInfo.countryOfResidence) || "—"}</p>
-            </div>
-            <div className="min-w-0 border-b border-zinc-100 pb-2.5">
-              <p className={denseLabel}>Validité passeport (mois)</p>
-              <p className={cn(denseValue, "truncate")}>{passportValidity}</p>
-            </div>
-            <div className="min-w-0 border-b border-zinc-100 pb-2.5">
-              <p className={denseLabel}>Adresse</p>
-              <p className={cn(denseValue, "truncate")}>{coerceSingleLine(studentInfo.fullAddress) || "—"}</p>
-            </div>
-          </div>
-        </Card>
+      <div className="mb-4">
+
 
         {/* Parcours — timeline verticale, accent unique */}
         <Card className="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.04)] sm:p-5">
@@ -400,9 +309,9 @@ export default function StudentDashboardHome() {
                 <div className="ml-6 flex items-center justify-between gap-2 rounded-xl border border-dashed border-zinc-200 bg-white/80 px-3 py-2.5">
                   <div className="flex items-center gap-2 text-zinc-600">
                     {row.icon}
-                    <span className="text-sm font-medium text-zinc-800">{row.title}</span>
+                    {row.id === "scholarship" ? <Link href="/student_italy/bourse" className="text-sm font-medium text-zinc-800 hover:underline">Bourse</Link> : <span className="text-sm font-medium text-zinc-800">{row.title}</span>}
                   </div>
-                  <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">Bientôt</span>
+                  {row.id === "scholarship" ? <Link href="/student_italy/bourse" className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">Voir le dossier</Link> : <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">Bientôt</span>}
                 </div>
               </div>
             ))}

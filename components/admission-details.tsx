@@ -1,4 +1,8 @@
 "use client"
+import StudentAccountsDetails, { type StudentAccountsData } from "@/components/student-accounts-details"
+import StudentLanguageDetails from "@/components/student-language-details"
+import StudentContract from "@/components/student-contract"
+import StudentProposalDetails from "@/components/student-proposal-details"
 
 import { useEffect, useState } from "react"
 import {
@@ -16,62 +20,10 @@ import {
 } from "@/components/ui/tooltip"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, FileSignature, FolderOpen, GraduationCap, Languages, CheckCircle, Eye, Upload, BookOpen } from "lucide-react"
+import { FileText, FileSignature, FolderOpen, GraduationCap, Languages, CheckCircle, Eye, Upload, Mail } from "lucide-react"
 import ViewApplications from "@/components/view-applications"
 
 const DOCUMENT_SUBMISSION_FORM_URL = "https://airtable.com/appkqvTuc8F0AhWPp/pag7uq3j4JejxC28v/form"
-
-/** Texte par étape — à remplir quand le contenu sera fourni. */
-const ADMISSION_STEP_INSTRUCTIONS: Partial<Record<string, string>> = {
-  proposal: `Cette étape correspond à un rendez-vous de consultation et d’orientation avec notre équipe : il s’agit d’un échange en visioconférence en tête-à-tête (one-to-one), en ligne, dans lequel nous prenons le temps de comprendre votre parcours et vos objectifs.
-
-Au cours de cet entretien, nous analysons votre profil académique et professionnel, recueillons vos préférences (ville, établissement, filière, calendrier, budget, etc.), puis nous répondons à toutes vos questions sur les études en Italie, les démarches et la suite du dossier.
-
-C’est le moment idéal pour aligner vos attentes avec les options réelles et poser les bases d’une stratégie d’admission claire.
-
-Pour prendre rendez-vous ou obtenir plus d’informations sur les disponibilités, contactez-nous au +39 352 088 0880.`,
-  reglement: `Il s’agit du contrat qui encadre notre collaboration, notamment le droit d’utilisation de vos données personnelles dans le cadre de votre dossier (conformité et transparence).
-
-C’est une étape simple : en général, vous recevez le document par e-mail ou par WhatsApp, vous le signez et nous le renvoyez comme indiqué.
-
-Une fois le contrat validé de notre côté, vous retrouvez la version finale en téléchargement depuis votre espace (ou le lien communiqué par l’équipe).`,
-  languageCertificate: `Les universités italiennes reconnaissent en général les certificats de langue suivants pour les formations en anglais (liste indicative — vérifiez toujours la fiche du programme choisi) :
-
-• IELTS Academic
-• TOEFL iBT (Internet-Based Test)
-• Cambridge English : B2 First (FCE), C1 Advanced (CAE), C2 Proficiency (CPE)
-• PTE Academic (Pearson)
-• Trinity College London : ISE II / ISE III (selon programmes)
-
-Si vous suivez ou préparez un cursus en italien, les certificats d’italien L2 les plus couramment acceptés sont :
-
-• CILS (Certificazione di Italiano come Lingua Straniera — Università per Stranieri di Siena)
-• CELI (Certificazione di conoscenza della lingua italiana — Università per Stranieri di Perugia)
-• PLIDA (Progetto Lingua Italiana Dante Alighieri)
-• Certificazione IT (Università Roma Tre)
-
-Le niveau exigé (souvent B2 pour l’italien, scores minimaux pour l’anglais) et la liste exacte des preuves acceptées sont fixés par chaque université et chaque appel ; votre conseiller peut vous confirmer le bon examen et la date limite pour votre dossier.`,
-  dossierOriginal: `Pour constituer votre dossier original, rassemblez notamment :
-
-• votre CV à jour ;
-• une pièce d’identité — de préférence le passeport (valide) ;
-• vos relevés de notes depuis le bac, et tous vos diplômes depuis le baccalauréat (bac, études supérieures, autre formation reconnue) ;
-• les certificats de formation ou d’expérience professionnelle dont vous disposez ;
-• vos attestations ou certificats de langue.
-
-Vous soumettez ces documents via le formulaire indiqué sur cette étape. Notre équipe les examine : après évaluation, nous vous communiquons la liste des pièces à faire traduire (étape « Traduction ») ainsi que, le cas échéant, la liste des documents manquants ou à compléter.`,
-  traduction: "",
-  dossierTraduit: "",
-  application: "",
-  decisionAdmission: "",
-  validationUniversitaly: "",
-}
-
-function instructionBodyForStep(stepId: string): string {
-  const custom = ADMISSION_STEP_INSTRUCTIONS[stepId]?.trim()
-  if (custom) return custom
-  return "Les instructions pour cette étape seront ajoutées prochainement."
-}
 
 export interface FileAttachment {
   id: string
@@ -198,7 +150,7 @@ const hasValue = (value: FieldValue): boolean => {
 // Helper function to determine status badge
 const getStatusBadge = (value: FieldValue): { text: string; className: string } => {
   const strValue = formatValue(value).toLowerCase()
-  
+
   if (!value || strValue === "—") {
     return { text: "Manquant", className: "bg-gray-500/20 text-gray-700 dark:text-gray-400" }
   }
@@ -227,7 +179,7 @@ const getStatusBadge = (value: FieldValue): { text: string; className: string } 
   return { text: "En cours", className: "bg-blue-500/20 text-blue-700 dark:text-blue-400" }
 }
 
-/** Proposal : une seule étape = présence du document de proposition. */
+/** Proposal : une seule étape = présence du document de fiche d’orientation. */
 function proposalDocumentPresent(admissionData: AdmissionData): boolean {
   return hasValue(admissionData.proposalDocument)
 }
@@ -312,22 +264,22 @@ const getTimelineIconColor = (block: BlockData, admissionData: AdmissionData): "
   const fieldsWithValues = block.fields.filter(field => hasValue(field.value))
   const completedFields = block.fields.filter(field => isCompleted(field.value))
   const inProgressFields = block.fields.filter(field => isInProgress(field.value))
-  
+
   // If no fields have values, return red
   if (fieldsWithValues.length === 0) {
     return "red"
   }
-  
+
   // If all fields with values are completed, return green
   if (completedFields.length === fieldsWithValues.length && completedFields.length > 0) {
     return "green"
   }
-  
+
   // If some fields are completed or in progress, return yellow
   if (completedFields.length > 0 || inProgressFields.length > 0 || fieldsWithValues.length > 0) {
     return "yellow"
   }
-  
+
   // Default to red if nothing is done
   return "red"
 }
@@ -341,10 +293,10 @@ function buildAdmissionBlocks(admissionData: AdmissionData): BlockData[] {
   return [
     {
       id: "proposal",
-      title: "Proposition",
+      title: "Fiche d’orientation",
       icon: <FileText className="w-6 h-6" />,
       mainField: undefined,
-      fields: [{ label: "Document de proposition", value: admissionData.proposalDocument }],
+      fields: [{ label: "Document de fiche d’orientation", value: admissionData.proposalDocument }],
     },
     {
       id: "reglement",
@@ -353,12 +305,19 @@ function buildAdmissionBlocks(admissionData: AdmissionData): BlockData[] {
       mainField: undefined,
       fields: [
         { label: "Contrat", value: admissionData.contractDocument },
-        { label: "Email de candidature", value: admissionData.emailForApplication },
+
       ],
     },
     {
+      id: "applicationEmail",
+      title: "Mail de candidature",
+      icon: <Mail className="w-6 h-6" />,
+      mainField: admissionData.emailForApplication,
+      fields: [{ label: "Mail de candidature", value: admissionData.emailForApplication }],
+    },
+    {
       id: "languageCertificate",
-      title: "Certificat de langue",
+      title: "Langue",
       icon: <Languages className="w-6 h-6" />,
       mainField: undefined,
       fields: [{ label: "Certificat de langue", value: admissionData.languageCertificate }],
@@ -412,16 +371,41 @@ function buildAdmissionBlocks(admissionData: AdmissionData): BlockData[] {
 export function AdmissionDetailsContent({
   admissionData,
   prospectId,
+  contratSigned = false,
 }: {
   admissionData?: AdmissionData
   prospectId?: string
+  contratSigned?: boolean
 }) {
   const [candidaturesOpen, setCandidaturesOpen] = useState(false)
   const [applicationsCount, setApplicationsCount] = useState<number | null>(null)
   const [dossierOriginalInfo, setDossierOriginalInfo] = useState<DossierOriginalInfo | null>(null)
   const [selectedStep, setSelectedStep] = useState(0)
   const [detailsOpen, setDetailsOpen] = useState(false)
-  const [instructionStepId, setInstructionStepId] = useState<string | null>(null)
+  const [accountsData, setAccountsData] = useState<StudentAccountsData | null>(null)
+  const [accountsError, setAccountsError] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    setAccountsData(null); setAccountsError(false)
+    if (!prospectId) return
+    fetch("/api/student-accounts?prospectId=" + encodeURIComponent(prospectId))
+      .then(async res => { if (!res.ok) throw new Error(); return res.json() })
+      .then(data => { if (!cancelled) setAccountsData(data) })
+      .catch(() => { if (!cancelled) setAccountsError(true) })
+    return () => { cancelled = true }
+  }, [prospectId])
+  const [proposalPercent, setProposalPercent] = useState<number | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    setProposalPercent(null)
+    if (!prospectId) return
+    fetch("/api/proposal-details?prospectId=" + encodeURIComponent(prospectId))
+      .then(async res => { if (!res.ok) throw new Error(); return res.json() })
+      .then(data => { if (!cancelled && typeof data.percent === "number") setProposalPercent(data.percent) })
+      .catch(() => { if (!cancelled) setProposalPercent(null) })
+    return () => { cancelled = true }
+  }, [prospectId])
+
 
   useEffect(() => {
     if (!prospectId) {
@@ -485,6 +469,9 @@ export function AdmissionDetailsContent({
   const blocks = buildAdmissionBlocks(admissionData)
 
   const getBlockTraffic = (block: BlockData): "green" | "yellow" | "red" => {
+    if (block.id === "applicationEmail") return (accountsData?.applicationEmail || admissionData.emailForApplication)?.trim() ? "green" : "red"
+    if (block.id === "reglement" && contratSigned) return "green"
+    if (block.id === "proposal") return proposalPercent !== null && proposalPercent > 60 ? "green" : proposalPercent !== null && proposalPercent > 0 ? "yellow" : "red"
     if (block.id === "dossierOriginal") {
       const statut = dossierOriginalInfo?.statutDossier?.trim().toLowerCase() ?? ""
       if (statut === "complet" || statut === "complete" || statut === "completed") {
@@ -519,12 +506,12 @@ export function AdmissionDetailsContent({
     return DOCUMENT_SUBMISSION_FORM_URL
   })()
 
-  const instructionBlock = instructionStepId ? blocks.find((b) => b.id === instructionStepId) : null
 
   const getStepPreview = (block: BlockData): string => {
     if (block.id === "application") {
       return applicationsCount === null ? "Candidatures non chargées" : `${applicationsCount} candidature(s)`
     }
+
     if (block.id === "dossierOriginal") {
       const s = dossierOriginalInfo?.statutDossier?.trim()
       return s ? `Statut de dossier: ${s}` : "Statut de dossier non disponible"
@@ -561,7 +548,7 @@ export function AdmissionDetailsContent({
           <ol className="space-y-3">
             {blocks.map((block, index) => {
               const state = getBlockTraffic(block)
-              const preview = getStepPreview(block)
+              const preview = block.id === "applicationEmail" ? (accountsData?.applicationEmail || admissionData.emailForApplication || "Mail de candidature non renseigné") : block.id === "reglement" && contratSigned ? "Contrat signé" : block.id === "proposal" && proposalPercent !== null ? proposalPercent + "% des informations complétées" : getStepPreview(block)
               const isCurrent = index === currentStep
               const nodeClass =
                 state === "green"
@@ -641,24 +628,7 @@ export function AdmissionDetailsContent({
                             <TooltipContent side="top">Soumettre mes documents</TooltipContent>
                           </Tooltip>
                         ) : null}
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-9 w-9 min-w-9 shrink-0 justify-center gap-0 border-violet-300 bg-violet-50 p-0 text-violet-800 hover:bg-violet-100 hover:text-violet-900 @[560px]/admission-step:h-7 @[560px]/admission-step:w-auto @[560px]/admission-step:min-w-0 @[560px]/admission-step:gap-1.5 @[560px]/admission-step:px-2.5"
-                              aria-label="Instruction"
-                              onClick={() => setInstructionStepId(block.id)}
-                            >
-                              <BookOpen className="h-4 w-4 shrink-0 @[560px]/admission-step:mr-1 @[560px]/admission-step:h-3.5 @[560px]/admission-step:w-3.5" />
-                              <span className="sr-only @[560px]/admission-step:not-sr-only @[560px]/admission-step:inline">
-                                Instruction
-                              </span>
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent side="top">Instruction</TooltipContent>
-                        </Tooltip>
+
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -688,24 +658,7 @@ export function AdmissionDetailsContent({
         </div>
       </Card>
 
-      <Dialog
-        open={instructionStepId !== null}
-        onOpenChange={(open) => {
-          if (!open) setInstructionStepId(null)
-        }}
-      >
-        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl">
-              Instructions{instructionBlock ? ` · ${instructionBlock.title}` : ""}
-            </DialogTitle>
-            <DialogDescription>À lire avant de passer à l&apos;action sur cette étape.</DialogDescription>
-          </DialogHeader>
-          <div className="whitespace-pre-line text-sm leading-relaxed text-zinc-700">
-            {instructionStepId ? instructionBodyForStep(instructionStepId) : null}
-          </div>
-        </DialogContent>
-      </Dialog>
+
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
@@ -714,7 +667,15 @@ export function AdmissionDetailsContent({
             <DialogDescription>Détails complets de cette étape</DialogDescription>
           </DialogHeader>
 
-          {selectedBlock.id === "application" ? (
+          {selectedBlock.id === "proposal" ? (
+            <StudentProposalDetails prospectId={prospectId} />
+          ) : selectedBlock.id === "languageCertificate" ? (
+            <StudentLanguageDetails certificate={admissionData.languageCertificate} />
+          ) : selectedBlock.id === "applicationEmail" ? (
+            <StudentAccountsDetails data={accountsData} error={accountsError} />
+          ) : selectedBlock.id === "reglement" ? (
+            <StudentContract />
+          ) : selectedBlock.id === "application" ? (
             <div className="space-y-3">
               <p className="text-sm text-zinc-600">Consultez vos candidatures pour voir université, formation et statut.</p>
               <div className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm">

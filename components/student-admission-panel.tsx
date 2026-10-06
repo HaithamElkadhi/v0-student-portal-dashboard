@@ -15,6 +15,7 @@ export default function StudentAdmissionPanel() {
         <AdmissionDetailsContent
           admissionData={studentInfo.admission as AdmissionData | undefined}
           prospectId={studentInfo.folderId}
+          contratSigned={studentInfo.contratSigned}
         />
       </Card>
     </>

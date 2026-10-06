@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
@@ -11,7 +11,8 @@ export const metadata: Metadata = {
   // <CHANGE> Updated metadata for JEEXPERT student portal
   title: "JEEXPERT Portail Étudiant",
   description: "Suivez votre parcours d'admission, visa, bourse et intégration",
-  generator: "v0.app",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "JEEXPERT", statusBarStyle: "default" },
   icons: {
     icon: [
       {
@@ -19,9 +20,11 @@ export const metadata: Metadata = {
         type: "image/png",
       },
     ],
-    apple: "/Jeexpert Logo base.png",
+    apple: "/icons/pwa-192.png",
   },
 }
+
+export const viewport: Viewport = { themeColor: "#ffffff" }
 
 export default function RootLayout({
   children,
