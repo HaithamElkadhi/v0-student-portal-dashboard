@@ -13,6 +13,8 @@ export interface PortalAdmissionData {
   documentEvaluation?: string | string[]
   translation?: string | string[]
   declarationOfValue?: string | string[]
+  originalAdmissionDocuments?: { id: string; url: string; filename?: string }[]
+  requestedDocuments?: string
   languageCertificate?: unknown
   formulaireDossierOriginal?: string | string[]
   emailForApplication?: string

@@ -1,6 +1,10 @@
 "use client"
 import StudentAccountsDetails, { type StudentAccountsData } from "@/components/student-accounts-details"
+import { languageOptions, type LanguageProof } from "@/lib/language-proofs"
 import StudentLanguageDetails from "@/components/student-language-details"
+import StudentAdmissionDossier from "@/components/student-admission-dossier"
+import StudentRequestedDocuments from "@/components/student-requested-documents"
+import StudentOriginalDocuments from "@/components/student-original-documents"
 import StudentContract from "@/components/student-contract"
 import StudentProposalDetails from "@/components/student-proposal-details"
 
@@ -46,6 +50,8 @@ export interface AdmissionData {
   documentEvaluation?: string | string[]
   translation?: string | string[]
   declarationOfValue?: string | string[]
+  originalAdmissionDocuments?: FileAttachment[]
+  requestedDocuments?: string
   languageCertificate?: string | string[] | FileAttachment[]
   formulaireDossierOriginal?: string | string[]
   // Étapes (à lier précisément aux champs Airtable)
@@ -286,7 +292,6 @@ const getTimelineIconColor = (block: BlockData, admissionData: AdmissionData): "
 
 function buildAdmissionBlocks(admissionData: AdmissionData): BlockData[] {
   const dossierOriginalValue = admissionData.dossierOriginal ?? admissionData.admissionFolderDocuments
-  const traductionValue = admissionData.traduction ?? admissionData.translation
   const decisionAdmissionValue = admissionData.decisionAdmission ?? admissionData.applicationUniversity
   const validationUniversitalyValue = admissionData.validationUniversitaly ?? admissionData.accountUniversitaly
 
@@ -309,15 +314,22 @@ function buildAdmissionBlocks(admissionData: AdmissionData): BlockData[] {
       ],
     },
     {
+      id: "requestedDocuments",
+      title: "Documents demandés",
+      icon: <FileText className="w-6 h-6" />,
+      mainField: admissionData.requestedDocuments,
+      fields: [{ label: "Documents demandés", value: admissionData.requestedDocuments }],
+    },
+    {
       id: "applicationEmail",
-      title: "Mail de candidature",
+      title: "Comptes de candidature",
       icon: <Mail className="w-6 h-6" />,
       mainField: admissionData.emailForApplication,
-      fields: [{ label: "Mail de candidature", value: admissionData.emailForApplication }],
+      fields: [{ label: "Adresse e-mail de candidature", value: admissionData.emailForApplication }],
     },
     {
       id: "languageCertificate",
-      title: "Langue",
+      title: "Justificatifs de langue",
       icon: <Languages className="w-6 h-6" />,
       mainField: undefined,
       fields: [{ label: "Certificat de langue", value: admissionData.languageCertificate }],
@@ -328,13 +340,6 @@ function buildAdmissionBlocks(admissionData: AdmissionData): BlockData[] {
       icon: <FolderOpen className="w-6 h-6" />,
       mainField: dossierOriginalValue,
       fields: [{ label: "Dossier Original", value: dossierOriginalValue }],
-    },
-    {
-      id: "traduction",
-      title: "Traduction",
-      icon: <Languages className="w-6 h-6" />,
-      mainField: traductionValue,
-      fields: [{ label: "Traduction", value: traductionValue }],
     },
     {
       id: "dossierTraduit",
@@ -372,16 +377,30 @@ export function AdmissionDetailsContent({
   admissionData,
   prospectId,
   contratSigned = false,
+  studentEmail,
 }: {
   admissionData?: AdmissionData
   prospectId?: string
   contratSigned?: boolean
+  studentEmail?: string
 }) {
   const [candidaturesOpen, setCandidaturesOpen] = useState(false)
   const [applicationsCount, setApplicationsCount] = useState<number | null>(null)
   const [dossierOriginalInfo, setDossierOriginalInfo] = useState<DossierOriginalInfo | null>(null)
   const [selectedStep, setSelectedStep] = useState(0)
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const [languageProofs, setLanguageProofs] = useState<LanguageProof[] | null>(null)
+  const [languageError, setLanguageError] = useState(false)
+  useEffect(() => {
+    const controller = new AbortController()
+    if (!prospectId || !studentEmail || detailsOpen) return
+    setLanguageError(false)
+    fetch("/api/student-language?" + new URLSearchParams({ email: studentEmail, folderId: prospectId }), { signal: controller.signal })
+      .then(async res => { if (!res.ok) throw new Error(); return res.json() })
+      .then(data => setLanguageProofs(data.proofs))
+      .catch(() => { if (!controller.signal.aborted) setLanguageError(true) })
+    return () => controller.abort()
+  }, [prospectId, studentEmail, detailsOpen])
   const [accountsData, setAccountsData] = useState<StudentAccountsData | null>(null)
   const [accountsError, setAccountsError] = useState(false)
   useEffect(() => {
@@ -469,6 +488,7 @@ export function AdmissionDetailsContent({
   const blocks = buildAdmissionBlocks(admissionData)
 
   const getBlockTraffic = (block: BlockData): "green" | "yellow" | "red" => {
+    if (block.id === "requestedDocuments") return admissionData.requestedDocuments?.trim() ? "green" : "red"
     if (block.id === "applicationEmail") return (accountsData?.applicationEmail || admissionData.emailForApplication)?.trim() ? "green" : "red"
     if (block.id === "reglement" && contratSigned) return "green"
     if (block.id === "proposal") return proposalPercent !== null && proposalPercent > 60 ? "green" : proposalPercent !== null && proposalPercent > 0 ? "yellow" : "red"
@@ -513,6 +533,8 @@ export function AdmissionDetailsContent({
     }
 
     if (block.id === "dossierOriginal") {
+      const count = admissionData.originalAdmissionDocuments?.length ?? 0
+      if (count) return `${count} document(s) original(aux) ajouté(s)`
       const s = dossierOriginalInfo?.statutDossier?.trim()
       return s ? `Statut de dossier: ${s}` : "Statut de dossier non disponible"
     }
@@ -547,8 +569,14 @@ export function AdmissionDetailsContent({
         <div className="relative">
           <ol className="space-y-3">
             {blocks.map((block, index) => {
+              const candidatureCard = block.id === "application"
+              const decisionCard = block.id === "decisionAdmission" || block.id === "validationUniversitaly"
+              const originalDocumentsCard = block.id === "dossierOriginal"
+              const requestedDocumentsCard = block.id === "requestedDocuments"
+              const languageCard = block.id === "languageCertificate"
+              const mobileCardOpensDetails = ["proposal", "reglement", "applicationEmail", "dossierTraduit"].includes(block.id)
               const state = getBlockTraffic(block)
-              const preview = block.id === "applicationEmail" ? (accountsData?.applicationEmail || admissionData.emailForApplication || "Mail de candidature non renseigné") : block.id === "reglement" && contratSigned ? "Contrat signé" : block.id === "proposal" && proposalPercent !== null ? proposalPercent + "% des informations complétées" : getStepPreview(block)
+              const preview = block.id === "applicationEmail" ? (accountsData?.applicationEmail || admissionData.emailForApplication || "Comptes de candidature non renseignés") : block.id === "reglement" && contratSigned ? "Contrat signé" : block.id === "proposal" && proposalPercent !== null ? proposalPercent + "% des informations complétées" : getStepPreview(block)
               const isCurrent = index === currentStep
               const nodeClass =
                 state === "green"
@@ -569,16 +597,17 @@ export function AdmissionDetailsContent({
                     {index + 1}
                   </span>
                   <div
-                    className={`@container/admission-step rounded-lg border px-3 py-2.5 sm:px-3.5 ${
+                    className={`@container/admission-step relative rounded-lg border px-3 py-2.5 sm:px-3.5 ${
                       isCurrent ? "border-[var(--jx-terracotta)]/40 bg-[#fff9f5]" : "border-zinc-200 bg-white"
                     }`}
                   >
+                    {(mobileCardOpensDetails || languageCard || originalDocumentsCard || decisionCard || requestedDocumentsCard || candidatureCard) && <button type="button" aria-label={"Consulter " + block.title} aria-haspopup="dialog" onClick={() => { if (candidatureCard) { setCandidaturesOpen(true); return } setSelectedStep(index); setDetailsOpen(true) }} className={`absolute inset-0 z-10 cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--jx-terracotta)] ${languageCard || decisionCard || requestedDocumentsCard ? "" : "md:hidden"}`} />}
                     <div className="flex min-w-0 flex-col gap-2.5 @[560px]/admission-step:flex-row @[560px]/admission-step:items-start @[560px]/admission-step:gap-2">
                       <div className="min-w-0 w-full @[560px]/admission-step:flex-1">
                         <p className="break-words text-xs font-semibold text-zinc-900">{block.title}</p>
-                        <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500 @[560px]/admission-step:truncate">{preview}</p>
+                        {languageCard && studentEmail ? <div className="mt-1 space-y-1 text-xs text-zinc-500">{languageError ? <p>Justificatifs indisponibles — cliquez pour réessayer</p> : languageProofs === null ? <p>Chargement des justificatifs…</p> : languageProofs.length ? languageProofs.map(proof => <p key={proof.id} className="break-words"><span className="font-medium text-zinc-700">{proof.language === "italian" ? "Italien" : "Anglais"} · {proof.type === "ef_legacy" ? "EF SET" : languageOptions.find(o => o.id === proof.type)?.label ?? proof.type}</span>{proof.score ? " — " + proof.score + (proof.type.startsWith("ef") ? "/100" : proof.type === "ielts" ? "/9" : "") : languageOptions.find(o => o.id === proof.type)?.studies ? (proof.documents.length ? " — document déposé" : " — à compléter") : " — score non renseigné"}</p>) : <p>Aucun justificatif ajouté</p>}</div> : <p className={requestedDocumentsCard ? "mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed text-zinc-600" : "mt-0.5 line-clamp-2 text-xs text-zinc-500 @[560px]/admission-step:truncate"}>{requestedDocumentsCard ? admissionData.requestedDocuments?.trim() ? "Consulter les documents demandés" : "Aucun document demandé pour le moment." : preview}</p>}
                       </div>
-                      <div className="flex w-full min-w-0 flex-row flex-wrap items-center justify-end gap-1.5 @[560px]/admission-step:ml-auto @[560px]/admission-step:w-auto @[560px]/admission-step:shrink-0 @[560px]/admission-step:gap-2">
+                      <div className={`flex w-full min-w-0 flex-row flex-wrap items-center justify-end gap-1.5 @[560px]/admission-step:ml-auto @[560px]/admission-step:w-auto @[560px]/admission-step:shrink-0 @[560px]/admission-step:gap-2 ${languageCard || requestedDocumentsCard || decisionCard ? "hidden" : mobileCardOpensDetails || originalDocumentsCard || candidatureCard ? "hidden md:flex" : ""}`}>
                         {block.id === "application" ? (
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -612,6 +641,7 @@ export function AdmissionDetailsContent({
                                 className="h-9 w-9 min-w-9 shrink-0 justify-center gap-0 border-emerald-300 bg-emerald-50 p-0 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 @[560px]/admission-step:h-7 @[560px]/admission-step:w-auto @[560px]/admission-step:min-w-0 @[560px]/admission-step:gap-1.5 @[560px]/admission-step:px-2.5"
                                 aria-label="Soumettre mes documents"
                                 onClick={() => {
+                                  if (block.id === "dossierOriginal" || block.id === "dossierTraduit") { setSelectedStep(index); setDetailsOpen(true); return }
                                   if (typeof window !== "undefined") {
                                     const urlToOpen =
                                       block.id === "dossierOriginal" ? dossierOriginalFormUrl : DOCUMENT_SUBMISSION_FORM_URL
@@ -635,7 +665,7 @@ export function AdmissionDetailsContent({
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="h-9 w-9 min-w-9 shrink-0 justify-center gap-0 border-[var(--jx-terracotta)]/40 bg-[var(--jx-terracotta)] p-0 text-white hover:bg-[var(--jx-terracotta)]/90 hover:text-white @[560px]/admission-step:h-7 @[560px]/admission-step:w-auto @[560px]/admission-step:min-w-0 @[560px]/admission-step:gap-1.5 @[560px]/admission-step:px-2.5"
+                              className={`h-9 w-9 min-w-9 shrink-0 justify-center gap-0 border-[var(--jx-terracotta)]/40 bg-[var(--jx-terracotta)] p-0 text-white hover:bg-[var(--jx-terracotta)]/90 hover:text-white @[560px]/admission-step:h-7 @[560px]/admission-step:w-auto @[560px]/admission-step:min-w-0 @[560px]/admission-step:gap-1.5 @[560px]/admission-step:px-2.5 ${originalDocumentsCard || candidatureCard ? "hidden" : mobileCardOpensDetails ? "hidden md:inline-flex" : ""}`}
                               aria-label="Détail"
                               onClick={() => {
                                 setSelectedStep(index)
@@ -661,7 +691,7 @@ export function AdmissionDetailsContent({
 
 
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+        <DialogContent className="max-h-[90dvh] w-[calc(100%-1.5rem)] max-w-2xl overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-xl">Étape {safeSelectedStep + 1} · {selectedBlock.title}</DialogTitle>
             <DialogDescription>Détails complets de cette étape</DialogDescription>
@@ -669,6 +699,10 @@ export function AdmissionDetailsContent({
 
           {selectedBlock.id === "proposal" ? (
             <StudentProposalDetails prospectId={prospectId} />
+          ) : selectedBlock.id === "requestedDocuments" ? (
+            <StudentRequestedDocuments text={admissionData.requestedDocuments} />
+          ) : selectedBlock.id === "dossierTraduit" ? (
+            <StudentAdmissionDossier />
           ) : selectedBlock.id === "languageCertificate" ? (
             <StudentLanguageDetails certificate={admissionData.languageCertificate} />
           ) : selectedBlock.id === "applicationEmail" ? (
@@ -684,24 +718,7 @@ export function AdmissionDetailsContent({
               </div>
             </div>
           ) : selectedBlock.id === "dossierOriginal" ? (
-            <div className="space-y-2">
-              <div className="rounded-md border border-zinc-200 bg-zinc-50/70 px-3 py-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Documents requis</p>
-                <p className="mt-1 text-sm text-zinc-900">{dossierOriginalInfo?.requiredDocuments?.trim() || "—"}</p>
-              </div>
-              <div className="rounded-md border border-zinc-200 bg-zinc-50/70 px-3 py-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Commentaire</p>
-                <p className="mt-1 text-sm text-zinc-900">{dossierOriginalInfo?.commentaire?.trim() || "—"}</p>
-              </div>
-              <div className="rounded-md border border-zinc-200 bg-zinc-50/70 px-3 py-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Évaluation du dossier</p>
-                <p className="mt-1 text-sm text-zinc-900">{dossierOriginalInfo?.evaluationDossier?.trim() || "—"}</p>
-              </div>
-              <div className="rounded-md border border-zinc-200 bg-zinc-50/70 px-3 py-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Statut de dossier</p>
-                <p className="mt-1 text-sm text-zinc-900">{dossierOriginalInfo?.statutDossier?.trim() || "—"}</p>
-              </div>
-            </div>
+            <StudentOriginalDocuments />
           ) : (
             <div className="space-y-2">
               {selectedBlock.fields.map((field, index) => {

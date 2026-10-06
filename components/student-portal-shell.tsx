@@ -4,9 +4,7 @@ import { useState, useEffect, type ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import StudentAppInstall from "@/components/student-app-install"
-import StudentTicketForm from "@/components/student-ticket-form"
 import { LifeBuoy } from "lucide-react"
 import {
   LogOut,
@@ -32,6 +30,7 @@ const ADMISSION = "/student_italy/admission"
 const VISA = "/student_italy/visa"
 const SCHOLARSHIP = "/student_italy/bourse"
 const INTEGRATION = "/student_italy/integration"
+const SUPPORT = "/student_italy/support"
 const REGLEMENT = "/student_italy/reglement"
 
 function pageLabel(
@@ -79,11 +78,11 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
   const isReglement = pathname === REGLEMENT || pathname?.startsWith(`${REGLEMENT}/`)
 
   const navItemBase =
-    "relative flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-xl p-3 text-center text-sm font-medium md:min-h-0 md:flex-row md:justify-start md:gap-2.5 md:rounded-lg md:py-2 md:pl-2.5 md:pr-2 md:text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--jx-terracotta)]/25"
+    "relative flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white p-4 text-center text-sm font-medium shadow-sm md:border-0 md:shadow-none md:min-h-0 md:flex-row md:justify-start md:gap-2.5 md:rounded-lg md:py-2 md:pl-2.5 md:pr-2 md:text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--jx-terracotta)]/25"
   const navItemIdle = "text-zinc-700 hover:bg-zinc-100"
   const navItemActive =
     "bg-zinc-100 font-semibold text-[var(--jx-night)] before:absolute before:bottom-1 before:left-1/2 before:h-0.5 before:w-7 before:-translate-x-1/2 md:before:bottom-auto md:before:left-0 md:before:top-1/2 md:before:h-7 md:before:w-0.5 md:before:translate-x-0 md:before:-translate-y-1/2 before:rounded-full before:bg-[var(--jx-terracotta)]"
-  const navIconClass = "h-[18px] w-[18px] shrink-0 text-zinc-500"
+  const navIconClass = "h-7 w-7 shrink-0 text-[var(--jx-terracotta)] md:h-[18px] md:w-[18px] md:text-zinc-500"
 
   const NavLink = ({
     href,
@@ -119,26 +118,17 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
     )
   }
 
-  const label = isHome ? "Accueil" : isProfile ? "Profil" : pageLabel(isPayment, isAdmission, isVisa, isScholarship, isIntegration, isReglement)
+  const isSupport = pathname === SUPPORT
+  const label = isSupport ? "Support" : isHome ? "Accueil" : isProfile ? "Profil" : pageLabel(isPayment, isAdmission, isVisa, isScholarship, isIntegration, isReglement)
 
   return (
     <div className="min-h-screen scroll-smooth bg-zinc-100 font-sans antialiased text-zinc-900">
-      <button
-        type="button"
-        aria-label="Fermer le menu"
-        className={cn(
-          "fixed inset-0 z-40 bg-black/35 backdrop-blur-[2px] transition-opacity md:hidden",
-          menuOpen ? "opacity-100" : "pointer-events-none opacity-0",
-        )}
-        onClick={closeMenu}
-      />
-
       <div className="flex min-h-screen flex-col md:flex-row md:items-stretch">
         <aside
           id="portal-sidebar"
           className={cn(
-            "fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-zinc-200/80 bg-white transition-[opacity,transform] duration-200 ease-out md:sticky md:left-auto md:top-0 md:max-h-none md:rounded-none md:border-0 md:border-r md:translate-y-0 md:z-0 md:h-screen md:w-[14rem] md:max-w-none md:translate-x-0 md:shadow-none",
-            menuOpen ? "scale-100 opacity-100 shadow-2xl md:translate-x-0" : "pointer-events-none scale-95 opacity-0 md:pointer-events-auto md:scale-100 md:translate-x-0 md:opacity-100",
+            "fixed inset-x-0 top-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 flex w-full flex-col overflow-y-auto bg-zinc-50 transition-opacity duration-200 ease-out md:sticky md:left-auto md:top-0 md:max-h-none md:rounded-none md:border-0 md:border-r md:translate-y-0 md:z-0 md:h-screen md:w-[14rem] md:max-w-none md:translate-x-0 md:shadow-none",
+            menuOpen ? "visible opacity-100" : "invisible opacity-0 md:visible md:opacity-100",
           )}
           aria-label="Menu de navigation"
         >
@@ -147,7 +137,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
             <button
               type="button"
               onClick={closeMenu}
-              className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100"
+              className="flex h-11 w-11 items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-100"
               aria-label="Fermer"
             >
               <X className="h-4 w-4" />
@@ -165,17 +155,14 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
               />
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--jx-terracotta)]">JEEXPERT</p>
-                <p className="truncate text-xs text-zinc-500">Portail étudiant</p>
+                <p className="truncate text-xs text-zinc-500"><span className="md:hidden">{studentInfo.name}</span><span className="hidden md:inline">Portail étudiant</span></p>
               </div>
             </div>
           </div>
 
-          <nav className="grid min-h-0 flex-1 grid-cols-2 gap-2 overflow-y-auto p-3 md:flex md:flex-col md:gap-0.5 md:px-2 md:py-2" aria-label="Sections">
+          <nav className="grid shrink-0 grid-cols-2 content-start gap-3 p-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:flex md:flex-col md:gap-0.5 md:px-2 md:py-2" aria-label="Sections">
             <p className="col-span-2 mb-1 px-2 text-center text-[10px] font-semibold md:text-left uppercase tracking-wider text-zinc-400">Menu</p>
-            <NavLink href={HOME} icon={<House className={navIconClass} aria-hidden />}>Accueil</NavLink>
-            <NavLink href={PROFILE} icon={<User className={navIconClass} aria-hidden />}>
-              Profil
-            </NavLink>
+            <div className="hidden md:block"><NavLink href={HOME} icon={<House className={navIconClass} aria-hidden />}>Accueil</NavLink></div>
             <NavLink href={PAYMENT} icon={<CreditCard className={navIconClass} aria-hidden />}>
               Paiement
             </NavLink>
@@ -222,25 +209,20 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex min-w-0 shrink-0 items-center gap-1.5">
+              <Link href={PROFILE} onClick={closeMenu} aria-label="Mon profil" title="Mon profil" aria-current={isProfile ? "page" : undefined} className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--jx-terracotta)]/30", isProfile ? "border-[var(--jx-terracotta)] bg-[var(--jx-terracotta)]/10 text-[var(--jx-terracotta)]" : "border-zinc-200 bg-zinc-100 text-zinc-600 hover:bg-zinc-200")}>
+                <User className="h-4 w-4" aria-hidden />
+              </Link>
               <div className="flex min-w-0 max-w-[5.5rem] items-center gap-1 rounded-md border border-zinc-200 bg-zinc-50 px-1.5 py-1 sm:max-w-[11rem] sm:gap-1.5 sm:px-2">
                 <FolderOpen className="h-3 w-3 shrink-0 text-zinc-500 sm:h-3.5 sm:w-3.5" aria-hidden />
                 <span className="truncate font-mono text-[10px] font-semibold text-zinc-800 sm:text-[11px]">
                   {studentInfo.folderId || "—"}
                 </span>
               </div>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" title="Ticket support" className="h-8 gap-1.5 rounded-md border-zinc-200 bg-white px-2 text-xs text-zinc-700 hover:bg-zinc-50 sm:px-2.5">
-                    <LifeBuoy className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">Ticket support</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-h-[90dvh] w-[calc(100%-2rem)] max-w-2xl overflow-y-auto rounded-2xl border-zinc-200 bg-white p-5 sm:p-6">
-                  <DialogTitle className="sr-only">Ticket support</DialogTitle>
-                  <DialogDescription className="sr-only">Envoyez une demande à notre équipe avec vos pièces jointes.</DialogDescription>
-                  <StudentTicketForm />
-                </DialogContent>
-              </Dialog>
+
+              <Button asChild variant="outline" size="sm" title="Support" className="h-8 gap-1.5 rounded-md border-zinc-200 bg-white px-2 text-xs text-zinc-700 hover:bg-zinc-50 sm:px-2.5">
+                <Link href={SUPPORT} onClick={closeMenu}><LifeBuoy className="h-3.5 w-3.5" /><span className="hidden sm:inline">Support</span></Link>
+              </Button>
+
               <Button
                 variant="outline"
                 size="sm"
@@ -265,11 +247,16 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
             </div>
           </header>
 
-          <div className="flex w-full min-w-0 flex-1 flex-col px-3 py-4 sm:px-5 sm:py-5">
+          <div className="flex w-full min-w-0 flex-1 flex-col px-3 pt-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-5 md:py-5">
             <div className="w-full max-w-none">{children}</div>
           </div>
         </div>
       </div>
+      <nav aria-label="Navigation mobile" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-3 border-t border-zinc-200 bg-white/95 px-3 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
+        <Link href={HOME} onClick={closeMenu} aria-current={isHome && !menuOpen ? "page" : undefined} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs font-medium", isHome && !menuOpen ? "text-[var(--jx-terracotta)]" : "text-zinc-500")}><House className="h-5 w-5" />Accueil</Link>
+        <button type="button" aria-expanded={menuOpen} aria-controls="portal-sidebar" onClick={() => setMenuOpen(value => !value)} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs font-medium", menuOpen ? "text-[var(--jx-terracotta)]" : "text-zinc-500")}><Menu className="h-5 w-5" />Menu</button>
+        <Link href={SUPPORT} onClick={closeMenu} aria-current={isSupport && !menuOpen ? "page" : undefined} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs font-medium", isSupport && !menuOpen ? "text-[var(--jx-terracotta)]" : "text-zinc-500")}><LifeBuoy className="h-5 w-5" />Support</Link>
+      </nav>
     </div>
   )
 }

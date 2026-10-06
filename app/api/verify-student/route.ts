@@ -248,6 +248,8 @@ export async function POST(request: NextRequest) {
       photo: fields["Photo"] || fields["photo"] || fields["Profile Photo"] || fields["profile photo"] || null,
       // Admission fields
       admission: {
+        originalAdmissionDocuments: getFileAttachments(["Documents admission originaux"]),
+        requestedDocuments: getFieldValue(["Documents demandés"]),
         // Bloc 1 - Proposal
         proposalDocument: getFileAttachments(["Proposal_Document", "Proposal Document", "proposal document", "Proposal_Document", "proposal_document"]) || getFieldValue(["Proposal_Document", "Proposal Document", "proposal document", "Proposal_Document", "proposal_document"]),
         proposalStatus: getFieldValue(["Proposal_Status", "Proposal Status", "proposal status", "proposal_status", "Proposal", "proposal"]),
@@ -345,6 +347,24 @@ export async function POST(request: NextRequest) {
           const folders = await folderResponse.json()
           const attachments = (folders.records ?? []).flatMap((folder: any) => ["fldfq3GHePP549ROj", "fldpJalULvbfdB5mg", "fldbNyWnYDNDHi7Kw"].flatMap(field => folder.fields?.[field] ?? []))
           if (attachments.length) studentInfo.admission.languageCertificate = attachments
+        }
+      }
+      const linkedResponse = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodedTableId}/${record.id}?returnFieldsByFieldId=true&fields%5B%5D=fld4OLaMH2ysiWjUC`, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` }, cache: "no-store" })
+      if (linkedResponse.ok) {
+        const linked = await linkedResponse.json()
+        const ids: string[] = linked.fields.fld4OLaMH2ysiWjUC ?? []
+        const documents: any[] = []
+        for (let i = 0; i < ids.length; i += 20) {
+          const url = new URL(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/tblEOBgIsqegFtqdm`)
+          url.searchParams.set("returnFieldsByFieldId", "true")
+          url.searchParams.set("filterByFormula", 'OR(' + ids.slice(i, i + 20).map(id => 'RECORD_ID()="' + id + '"').join(',') + ')')
+          url.searchParams.append("fields[]", "fldd3PmCebt4a3zSI")
+          const response = await fetch(url, { headers: { Authorization: `Bearer ${AIRTABLE_API_KEY}` }, cache: "no-store" })
+          if (response.ok) { const data = await response.json(); documents.push(...data.records.flatMap((r: any) => r.fields.fldd3PmCebt4a3zSI ?? [])) }
+        }
+        if (documents.length) {
+          const existing = studentInfo.admission.languageCertificate
+          studentInfo.admission.languageCertificate = [...(Array.isArray(existing) ? existing : []), ...documents]
         }
       }
     } catch { console.error("Unable to refresh language certificates") }

@@ -1,67 +1,80 @@
 import { NextRequest, NextResponse } from "next/server"
 import { AIRTABLE, getAirtableApiKey } from "@/lib/airtable-config"
 import { findProspectByEmail } from "@/lib/airtable-prospects"
-
-const table = "tblLWLiwFS2Cn3sbo"
-const fields = { ef: { certificate: "fldfq3GHePP549ROj", score: "fld6tAZwQ2tLQKFU1" }, ielts: { certificate: "fldpJalULvbfdB5mg", score: "fldIJUYRfOwSzUfFT" } }
+import { LANGUAGE_TABLE as table, LANGUAGE_FIELDS as F, languageOptions, type LanguageProof } from "@/lib/language-proofs"
 const headers = () => ({ Authorization: `Bearer ${getAirtableApiKey()}`, "Content-Type": "application/json" })
+async function call(url: string, init?: RequestInit) {
+  const res = await fetch(url, { ...init, headers: headers(), cache: "no-store" })
+  if (!res.ok) throw new Error("Airtable request failed")
+  return res.json()
+}
+const root = `https://api.airtable.com/v0/${AIRTABLE.baseId}`
 async function student(email: string, folderId: string) {
   if (!email || !/^[a-zA-Z0-9_-]+$/.test(folderId)) return null
   const id = await findProspectByEmail(email)
   if (!id) return null
-  const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE.baseId}/${AIRTABLE.tables.prospects.id}/${id}?returnFieldsByFieldId=true`, { headers: headers(), cache: "no-store" })
-  if (!res.ok) throw new Error("Student lookup failed")
-  const data = await res.json()
-  return data.fields.fldy26xuJG1jxUrxL === folderId ? data : null
+  const record = await call(`${root}/${AIRTABLE.tables.prospects.id}/${id}?returnFieldsByFieldId=true`)
+  return record.fields.fldy26xuJG1jxUrxL === folderId ? record : null
 }
-async function folder(folderId: string) {
-  const url = new URL(`https://api.airtable.com/v0/${AIRTABLE.baseId}/${table}`)
+function proof(record: any): LanguageProof {
+  const f = record.fields
+  return { id: record.id, language: f[F.language], type: f[F.type], score: f[F.score] ?? "", date: f[F.date] ?? "", institution: f[F.institution] ?? "", detail: f[F.detail] ?? "", documents: (f[F.documents] ?? []).map((d: any) => ({ name: d.filename, url: d.url })) }
+}
+async function list(owner: any, folderId: string) {
+  const ids: string[] = owner.fields.fld4OLaMH2ysiWjUC ?? []
+  const proofs: LanguageProof[] = []
+  for (let i = 0; i < ids.length; i += 20) {
+    const url = new URL(`${root}/${table}`)
+    url.searchParams.set("returnFieldsByFieldId", "true")
+    url.searchParams.set("filterByFormula", `OR(${ids.slice(i, i + 20).map(id => `RECORD_ID()="${id}"`).join(",")})`)
+    const data = await call(url.href)
+    proofs.push(...data.records.filter((r: any) => r.fields[F.prospect]?.includes(owner.id)).map(proof))
+  }
+  const url = new URL(`${root}/tblLWLiwFS2Cn3sbo`)
   url.searchParams.set("filterByFormula", `{Prospect ID}="${folderId}"`)
   url.searchParams.set("returnFieldsByFieldId", "true")
-  url.searchParams.set("maxRecords", "2")
-  const res = await fetch(url, { headers: headers(), cache: "no-store" })
-  if (!res.ok) throw new Error("Folder lookup failed")
-  const data = await res.json()
-  if (data.records.length > 1) throw new Error("Multiple folders for this student")
-  return data.records[0]
-}
-function payload(record: any) {
-  const values = record?.fields ?? {}
-  return Object.fromEntries(Object.entries(fields).map(([key, f]) => [key, { score: String(values[f.score] ?? ""), certificates: (values[f.certificate] ?? []).map((file: any) => ({ name: file.filename, url: file.url })) }]))
+  const old = await call(url.href)
+  for (const r of old.records) {
+    for (const [type, doc, score, language] of [["ef_legacy", "fldfq3GHePP549ROj", "fld6tAZwQ2tLQKFU1", "english"], ["ielts", "fldpJalULvbfdB5mg", "fldIJUYRfOwSzUfFT", "english"], ["other_en", "fldbNyWnYDNDHi7Kw", "", "english"], ["other_it", "fldQWBGYkKduxlRHu", "", "italian"]]) {
+      if (!r.fields[doc]?.length && r.fields[score] === undefined) continue
+      proofs.push({ id: r.id + "_" + type, type, language: language as LanguageProof["language"], score: String(r.fields[score] ?? ""), date: "", institution: "", detail: "Justificatif précédemment enregistré", legacy: true, documents: (r.fields[doc] ?? []).map((d: any) => ({ name: d.filename, url: d.url })) })
+    }
+  }
+  return proofs
 }
 export async function GET(req: NextRequest) {
   try {
-    const email = req.nextUrl.searchParams.get("email") ?? ""
     const folderId = req.nextUrl.searchParams.get("folderId") ?? ""
-    if (!await student(email, folderId)) return NextResponse.json({ error: "Dossier étudiant introuvable." }, { status: 403 })
-    return NextResponse.json(payload(await folder(folderId)))
-  } catch { return NextResponse.json({ error: "Impossible de charger les certificats." }, { status: 502 }) }
+    const owner = await student(req.nextUrl.searchParams.get("email") ?? "", folderId)
+    if (!owner) return NextResponse.json({ error: "Dossier étudiant introuvable." }, { status: 403 })
+    return NextResponse.json({ proofs: await list(owner, folderId) })
+  } catch { return NextResponse.json({ error: "Impossible de charger les justificatifs." }, { status: 502 }) }
 }
 export async function POST(req: NextRequest) {
+  let savedId = ""
   try {
     const form = await req.formData()
-    const email = String(form.get("email") ?? "").trim()
-    const folderId = String(form.get("folderId") ?? "").trim()
-    const kind = String(form.get("kind"))
-    const score = String(form.get("score") ?? "").trim()
+    const input = Object.fromEntries(["email", "folderId", "id", "type", "score", "date", "institution", "detail"].map(key => [key, String(form.get(key) ?? "").trim()]))
+    const option = languageOptions.find(o => o.id === input.type)
     const file = form.get("file")
-    if (!(kind === "ef" || kind === "ielts") || score.length > 100 || (kind === "ef" && score !== "" && (!/^\d+$/.test(score) || Number(score) > 100))) return NextResponse.json({ error: "Score invalide." }, { status: 400 })
-    if (file !== null && (!(file instanceof File) || !file.size || file.size > 5 * 1024 * 1024 || !["application/pdf", "image/jpeg", "image/png"].includes(file.type) || !/\.(pdf|jpe?g|png)$/i.test(file.name))) return NextResponse.json({ error: "Choisissez un PDF, JPG ou PNG de 5 Mo maximum." }, { status: 400 })
-    const owner = await student(email, folderId)
+    const validDate = !input.date || (/^\d{4}-\d{2}-\d{2}$/.test(input.date) && !Number.isNaN(Date.parse(input.date)) && new Date(input.date).toISOString().slice(0, 10) === input.date)
+    if (!option || input.score.length > 100 || input.institution.length > 250 || input.detail.length > 500 || !validDate || (input.id && !/^rec[a-zA-Z0-9]+$/.test(input.id))) return NextResponse.json({ error: "Informations invalides." }, { status: 400 })
+    if (input.type.startsWith("ef") && input.score && (!/^\d+$/.test(input.score) || Number(input.score) > 100)) return NextResponse.json({ error: "Score EF : entier entre 0 et 100." }, { status: 400 })
+    if (input.type === "ielts" && input.score && (!/^\d(\.\d)?$/.test(input.score) || Number(input.score) > 9 || Number(input.score) * 2 % 1 !== 0)) return NextResponse.json({ error: "Score IELTS : de 0 à 9, par demi-point." }, { status: 400 })
+    if (file !== null && (!(file instanceof File) || !file.size || file.size > 5 * 1024 * 1024 || !["application/pdf", "image/jpeg", "image/png"].includes(file.type) || !/\.(pdf|jpe?g|png)$/i.test(file.name))) return NextResponse.json({ error: "PDF, JPG ou PNG de 5 Mo maximum." }, { status: 400 })
+    const owner = await student(input.email, input.folderId)
     if (!owner) return NextResponse.json({ error: "Ce dossier ne correspond pas à votre e-mail." }, { status: 403 })
-    let record = await folder(folderId)
-    if (!record) {
-      const created = await fetch(`https://api.airtable.com/v0/${AIRTABLE.baseId}/${table}`, { method: "POST", headers: headers(), body: JSON.stringify({ fields: { fldJOHpBcdM6hdjIi: folderId, fldHHUw7WWoInVVxy: owner.fields[AIRTABLE.tables.prospects.fields.name] ?? "", fldHRhEJ4dbg3jr0Z: owner.fields[AIRTABLE.tables.prospects.fields.surname] ?? "" } }) })
-      if (!created.ok) throw new Error("Folder creation failed")
-      record = await created.json()
+    if (input.id) {
+      const existing = await call(`${root}/${table}/${input.id}?returnFieldsByFieldId=true`)
+      if (!existing.fields[F.prospect]?.includes(owner.id)) return NextResponse.json({ error: "Accès refusé." }, { status: 403 })
+      if (existing.fields[F.type] !== input.type) return NextResponse.json({ error: "Ajoutez un nouveau justificatif pour changer de test." }, { status: 400 })
     }
-    // Save the score first; a failed upload can be retried without duplicating a certificate.
-    const saved = await fetch(`https://api.airtable.com/v0/${AIRTABLE.baseId}/${table}/${record.id}`, { method: "PATCH", headers: headers(), body: JSON.stringify({ fields: { [fields[kind].score]: score === "" ? null : kind === "ef" ? Number(score) : score } }) })
-    if (!saved.ok) throw new Error("Score save failed")
+    const values = { [F.name]: `${input.folderId} — ${option.label}`, [F.prospect]: [owner.id], [F.language]: option.language, [F.type]: option.id, [F.score]: option.studies ? "" : input.score, [F.date]: input.date || null, [F.institution]: input.institution, [F.detail]: input.detail }
+    const saved = await call(`${root}/${table}${input.id ? "/" + input.id : ""}`, { method: input.id ? "PATCH" : "POST", body: JSON.stringify({ fields: values }) })
+    savedId = saved.id
     if (file instanceof File) {
-      const uploaded = await fetch(`https://content.airtable.com/v0/${AIRTABLE.baseId}/${record.id}/${fields[kind].certificate}/uploadAttachment`, { method: "POST", headers: headers(), body: JSON.stringify({ contentType: file.type, filename: file.name, file: Buffer.from(await file.arrayBuffer()).toString("base64") }) })
-      if (!uploaded.ok) return NextResponse.json({ error: "Score enregistré, mais le certificat n’a pas pu être ajouté. Réessayez." }, { status: 502 })
+      await call(`https://content.airtable.com/v0/${AIRTABLE.baseId}/${saved.id}/${F.documents}/uploadAttachment`, { method: "POST", body: JSON.stringify({ contentType: file.type, filename: file.name, file: Buffer.from(await file.arrayBuffer()).toString("base64") }) })
     }
-    return NextResponse.json(payload(await folder(folderId)))
-  } catch { return NextResponse.json({ error: "Impossible d’enregistrer. Réessayez." }, { status: 502 }) }
+    return NextResponse.json({ proof: proof(await call(`${root}/${table}/${saved.id}?returnFieldsByFieldId=true`)) })
+  } catch { return NextResponse.json({ id: savedId || undefined, error: savedId ? "Informations enregistrées. Le chargement du document a échoué : réessayez." : "Impossible d’enregistrer. Réessayez." }, { status: 502 }) }
 }

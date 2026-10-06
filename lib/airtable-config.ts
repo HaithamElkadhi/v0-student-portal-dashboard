@@ -18,6 +18,30 @@ export const AIRTABLE = {
         otherDocuments: "fldv0Ls0B3j3KwArG",
       },
     },
+    documents: {
+      id: "tbl4qg0oCDDMm6nfc",
+      fields: {
+        name: "flduCzBz6r4mbeyR6",
+        prospect: "flddLbOxT5ONdCPWX",
+        email: "fldvXXUGFdfSKRAjl",
+        submissionDate: "fld8DrbLEdxg0D4JE",
+        diplomaLevel: "fldo1JjqlT5kcO9eZ",
+        fieldOfStudy: "fldLz8dT90dTAEQed",
+        scoreFormat: "fldhfzzwpyesvUG2p",
+        scoreValue: "fldByb2VC7zf4PvLp",
+        gapYears: "flduV0meKEUlon4xz",
+        gapDescription: "fldp6UeYZT5Q9Tbe2",
+        gapDocTypes: "fldPj1ZezVOODe5EY",
+        passportExpiry: "fldZA6EiC0DH6h8G3",
+        languageCertName: "fldM0K2xgtpbanO1z",
+        documents: "fldlw19MuDmTwg7iy",
+        documentsStatus: "fldif76Ukh0xKQDoH",
+        dossierSubmitted: "fldHe22CIKSrHo9aK",
+        totalExpected: "fldjiRsKUUxt7Ra78",
+        submittedCount: "fldTT09a4RdZmRvOh",
+      },
+    },
+
     tasks: {
       id: "tblkmA6khmu06nmSb",
       fields: {
