@@ -72,7 +72,7 @@ export default function StudentPaymentsPanel() {
         </div>
       ) : (
         <div className="rounded-xl border border-zinc-200 bg-white p-3 sm:p-4">
-          <PaymentTable payments={payments} onInvoiceOpen={handleInvoiceOpen} />
+          <PaymentTable payments={payments} onInvoiceOpen={handleInvoiceOpen} invoiceHref={payment => "/api/payments/invoice?" + new URLSearchParams({ prospectId: studentInfo.folderId, email: studentInfo.email, ref: payment.ref })} />
         </div>
       )}
     </>

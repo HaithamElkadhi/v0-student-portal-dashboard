@@ -61,9 +61,10 @@ function StatusBadge({ status }: { status: PaymentStatus }) {
 export interface PaymentTableProps {
   payments: Payment[]
   onInvoiceOpen: (paymentRef: string, invoiceRef: string) => void
+  invoiceHref?: (payment: Payment) => string
 }
 
-export function PaymentTable({ payments, onInvoiceOpen }: PaymentTableProps) {
+export function PaymentTable({ payments, onInvoiceOpen, invoiceHref }: PaymentTableProps) {
   const urgent = getUrgentDuePayment(payments)
 
   return (
@@ -84,7 +85,18 @@ export function PaymentTable({ payments, onInvoiceOpen }: PaymentTableProps) {
         </div>
       ) : null}
 
-      <div className="overflow-x-auto">
+      <div className="space-y-3 md:hidden">
+        {!payments.length && <p className="py-6 text-center text-sm text-zinc-500">Aucun paiement trouvé.</p>}
+        {payments.map((p, index) => <article key={p.ref + index} className="min-w-0 rounded-xl border border-zinc-200 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xl font-semibold text-zinc-900">{formatMoney(p.amount, p.currency)}</p><StatusBadge status={p.status} /></div>
+          <p className="mt-3 break-words text-sm font-medium text-zinc-800">{p.motif === "—" ? "Motif non renseigné" : p.motif}</p>
+          <p className="mt-1 break-all text-xs text-zinc-400">{p.ref}</p>
+          <div className="mt-3 flex flex-wrap justify-between gap-2 rounded-lg bg-zinc-50 p-3 text-xs"><span className="text-zinc-500">Échéance</span><span className="font-semibold text-zinc-800">{p.dueDate ? formatDueDateLabel(p.dueDate) : "Non renseignée"}</span></div>
+          {p.comment && <p className="mt-3 whitespace-pre-wrap break-words text-xs text-zinc-500">{p.comment}</p>}
+          {p.invoiceUrl && <a href={invoiceHref ? invoiceHref(p) : p.invoiceUrl} download className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-lg bg-blue-50 px-3 text-sm font-medium text-blue-900"><DocIcon />Télécharger la facture PDF</a>}
+        </article>)}
+      </div>
+      <div className="hidden overflow-x-auto md:block">
         <table
           className="w-full min-w-[800px] table-fixed border-collapse text-left"
           style={{ tableLayout: "fixed" }}
@@ -201,7 +213,7 @@ export function PaymentTable({ payments, onInvoiceOpen }: PaymentTableProps) {
                         style={{ background: "#E6F1FB", color: "#0C447C" }}
                       >
                         <DocIcon className="shrink-0 text-[#0C447C]" />
-                        <span className="truncate">{p.invoiceRef ?? "Ouvrir la facture"}</span>
+                        <span className="truncate">Télécharger PDF</span>
                       </a>
                     ) : p.invoiceRef ? (
                       <button

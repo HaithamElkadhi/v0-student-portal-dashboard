@@ -378,11 +378,13 @@ export function AdmissionDetailsContent({
   prospectId,
   contratSigned = false,
   studentEmail,
+  summaryOnly = false,
 }: {
   admissionData?: AdmissionData
   prospectId?: string
   contratSigned?: boolean
   studentEmail?: string
+  summaryOnly?: boolean
 }) {
   const [candidaturesOpen, setCandidaturesOpen] = useState(false)
   const [applicationsCount, setApplicationsCount] = useState<number | null>(null)
@@ -542,6 +544,14 @@ export function AdmissionDetailsContent({
     if (!firstField) return "Information manquante"
     const value = formatValue(firstField.value)
     return value.length > 60 ? `${value.slice(0, 57)}...` : value
+  }
+
+  if (summaryOnly) {
+    return <div className="mt-4 border-t border-zinc-100 pt-3">
+      <div className="mb-2 flex items-center justify-between text-xs"><span className="text-zinc-500">Avancement de l’admission</span><span className="font-semibold text-zinc-900">{progressPct}%</span></div>
+      <div role="progressbar" aria-label="Avancement de l’admission" aria-valuenow={progressPct} aria-valuemin={0} aria-valuemax={100} className="h-2 overflow-hidden rounded-full bg-zinc-100"><div className="h-full rounded-full bg-emerald-600 transition-all" style={{ width: progressPct + "%" }} /></div>
+      <p className="mt-2 text-xs text-zinc-500">{completedCount}/{totalSteps} étapes complétées</p>
+    </div>
   }
 
   return (

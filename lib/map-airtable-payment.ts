@@ -5,14 +5,14 @@ const ALIASES = {
   ref: ["Réf", "Ref", "Reference", "N° paiement", "ID"],
   amount: ["Montant", "Amount", "Montant TTC"],
   currency: ["Devise", "Currency"],
-  motif: ["Motif", "Description", "Libellé", "Objet", "Libelle"],
+  motif: ["Purpose", "Motif", "Description", "Libellé", "Objet", "Libelle"],
   status: ["Statut", "Status", "État"],
   dueDate: ["Échéance", "Echeance", "Date d'échéance", "Due date", "Date echeance"],
   paymentDate: ["Date de paiement", "Payment date", "Date paiement"],
   comment: ["Commentaire", "Notes", "Note", "Comment"],
   exemptReason: ["Motif exonération", "Motif exoneration", "Exemption reason", "Raison exonération"],
   /** Unique champ facture dans la base (texte ou pièce jointe) */
-  invoice: ["Facture"],
+  invoice: ["Invoice", "Facture"],
   /** Champ type « last modified time » dans Airtable */
   lastModifiedAt: [
     "Last modification",
@@ -55,6 +55,7 @@ function toNumber(v: unknown): number {
 }
 
 function toText(v: unknown): string {
+  if (Array.isArray(v)) return v.map(toText).filter(Boolean).join(" · ")
   if (typeof v === "string") return v.trim()
   if (typeof v === "number" && !Number.isNaN(v)) return String(v)
   if (v && typeof v === "object" && "name" in (v as Record<string, unknown>)) {
@@ -89,6 +90,7 @@ function normalizeInvoiceField(value: unknown): { label?: string; url?: string }
 
   if (typeof value === "string") {
     const s = value.trim()
+    if (/^https:\/\//i.test(s)) return { url: s, label: "Facture.pdf" }
     if (s) return { label: s }
     return {}
   }
