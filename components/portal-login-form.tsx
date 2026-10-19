@@ -117,6 +117,7 @@ export function PortalLoginForm({ onSuccess }: PortalLoginFormProps) {
         body: JSON.stringify({
           email: method === "email" ? eTrim : undefined,
           folderId: method === "folder" ? fTrim : undefined,
+          loginEvent: true,
         }),
       })
       const data = await response.json()

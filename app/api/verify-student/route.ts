@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { recordStudentLogin } from "@/lib/student-login-history"
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID
@@ -368,6 +369,17 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch { console.error("Unable to refresh language certificates") }
+
+    if (body.loginEvent === true) {
+      await recordStudentLogin({
+        baseId: AIRTABLE_BASE_ID,
+        apiKey: AIRTABLE_API_KEY,
+        studentId: record.id,
+        email: studentInfo.email,
+        folderId: String(studentInfo.folderId ?? ""),
+        method: email ? "Email" : "Numéro de dossier",
+      })
+    }
 
     return NextResponse.json({
       success: true,
