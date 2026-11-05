@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { recordStudentLogin } from "@/lib/student-login-history"
+import { setDocumentSession } from "@/lib/student-document-session"
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID
@@ -381,10 +382,14 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    return NextResponse.json({
+    const verifiedResponse = NextResponse.json({
       success: true,
       student: studentInfo,
     })
+    if (typeof email === "string" && typeof folderId === "string" && email.trim().toLowerCase() === String(studentInfo.email).trim().toLowerCase() && folderId.trim() === String(studentInfo.folderId).trim()) {
+      setDocumentSession(verifiedResponse, { id: record.id, email: String(studentInfo.email), folderId: String(studentInfo.folderId) })
+    }
+    return verifiedResponse
   } catch (error) {
     console.error("Verification error:", error)
     return NextResponse.json(

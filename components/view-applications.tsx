@@ -30,13 +30,14 @@ interface Application {
 
 interface ViewApplicationsProps {
   open: boolean
-  onOpenChange: (open: boolean) => void
+  onOpenChange?: (open: boolean) => void
   prospectId: string
+  inline?: boolean
 }
 
-export default function ViewApplications({ open, onOpenChange, prospectId }: ViewApplicationsProps) {
+export default function ViewApplications({ open, onOpenChange, prospectId, inline = false }: ViewApplicationsProps) {
   const [applications, setApplications] = useState<Application[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(open)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -104,22 +105,15 @@ export default function ViewApplications({ open, onOpenChange, prospectId }: Vie
     return "bg-muted/30 text-muted-foreground"
   }
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Candidatures</DialogTitle>
-          <DialogDescription>Détail de vos candidatures par université et formation</DialogDescription>
-        </DialogHeader>
-
-        <div className="mt-6">
+  const content = <div className={inline ? "min-w-0" : "mt-6"}>
           {loading ? (
-            <div className="text-center py-8">
+            <div role="status" className="text-center py-8">
               <p className="text-muted-foreground">Chargement…</p>
             </div>
           ) : error ? (
-            <div className="text-center py-8">
+            <div role="alert" className="space-y-3 text-center py-8">
               <p className="text-destructive">{error}</p>
+              <button type="button" onClick={fetchApplications} className="min-h-11 rounded-lg border border-zinc-200 px-4 text-sm font-medium text-[#173B65] hover:bg-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173B65]">Réessayer</button>
             </div>
           ) : applications.length === 0 ? (
             <div className="text-center py-8">
@@ -162,6 +156,17 @@ export default function ViewApplications({ open, onOpenChange, prospectId }: Vie
             </div>
           )}
         </div>
+
+  if (inline) return content
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">Candidatures</DialogTitle>
+          <DialogDescription>Détail de vos candidatures par université et formation</DialogDescription>
+        </DialogHeader>
+        {content}
       </DialogContent>
     </Dialog>
   )

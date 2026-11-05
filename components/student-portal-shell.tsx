@@ -10,11 +10,6 @@ import {
   LogOut,
   User,
   House,
-  CreditCard,
-  ClipboardList,
-  Plane,
-  GraduationCap,
-  Globe,
   Menu,
   X,
   RefreshCw,
@@ -26,12 +21,13 @@ import { useStudentPortal } from "@/components/student-portal-context"
 const HOME = "/student_italy"
 const PROFILE = "/student_italy/profil"
 const PAYMENT = "/student_italy/paiement"
-const ADMISSION = "/student_italy/admission"
+const ADMISSION = "/student_italy/admission-provisoire"
 const VISA = "/student_italy/visa"
 const SCHOLARSHIP = "/student_italy/bourse"
 const INTEGRATION = "/student_italy/integration"
 const SUPPORT = "/student_italy/support"
 const REGLEMENT = "/student_italy/reglement"
+const BOOKING = "/student_italy/rendez-vous"
 
 function pageLabel(
   isPayment: boolean,
@@ -56,8 +52,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   const closeMenu = () => setMenuOpen(false)
-  const bookingBase = process.env.NEXT_PUBLIC_BOOKING_URL || "https://book.jeexpert.com"
-  const bookingHref = bookingBase ? bookingBase.split("#")[0] + "#" + new URLSearchParams({ studentName: [studentInfo.name, studentInfo.surname].filter(Boolean).join(" "), email: studentInfo.email, phone: studentInfo.phone || studentInfo.whatsapp || "", meetingType: "Follow up" }).toString() : null
+  const isBooking = pathname === BOOKING
 
   useEffect(() => {
     if (menuOpen) {
@@ -73,7 +68,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
   const isHome = pathname === HOME || pathname === `${HOME}/`
   const isProfile = pathname === PROFILE || pathname?.startsWith(PROFILE + "/")
   const isPayment = pathname === PAYMENT || pathname?.startsWith(`${PAYMENT}/`)
-  const isAdmission = pathname === ADMISSION || pathname?.startsWith(`${ADMISSION}/`)
+  const isAdmission = pathname === ADMISSION || pathname?.startsWith(`${ADMISSION}/`) || pathname === "/student_italy/admission" || pathname?.startsWith("/student_italy/admission/")
   const isVisa = pathname === VISA || pathname?.startsWith(`${VISA}/`)
   const isScholarship = pathname === SCHOLARSHIP || pathname?.startsWith(`${SCHOLARSHIP}/`)
   const isIntegration = pathname === INTEGRATION || pathname?.startsWith(`${INTEGRATION}/`)
@@ -103,6 +98,8 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
       (href === VISA && isVisa) ||
       (href === SCHOLARSHIP && isScholarship) ||
       (href === INTEGRATION && isIntegration) ||
+      (href === SUPPORT && isSupport) ||
+      (href === BOOKING && isBooking) ||
       (href === REGLEMENT && isReglement) ||
       false
     return (
@@ -121,7 +118,9 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
   }
 
   const isSupport = pathname === SUPPORT
-  const label = isSupport ? "Support" : isHome ? "Accueil" : isProfile ? "Profil" : pageLabel(isPayment, isAdmission, isVisa, isScholarship, isIntegration, isReglement)
+  const isDocuments = pathname === "/student_italy/documents" || pathname?.startsWith("/student_italy/documents/")
+  const isOrientation = pathname === "/student_italy/orientation" || pathname?.startsWith("/student_italy/orientation/")
+  const label = isBooking ? "Rendez-vous" : isOrientation ? "Orientation" : isDocuments ? "Documents" : isSupport ? "Support" : isHome ? "Accueil" : isProfile ? "Profil" : pageLabel(isPayment, isAdmission, isVisa, isScholarship, isIntegration, isReglement)
 
   return (
     <div className="min-h-screen scroll-smooth bg-zinc-100 font-sans antialiased text-zinc-900">
@@ -156,21 +155,9 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
           <nav className="grid shrink-0 grid-cols-2 content-start gap-3 p-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:flex md:flex-col md:gap-0.5 md:px-2 md:py-2" aria-label="Sections">
             <p className="col-span-2 mb-1 px-2 text-center text-[10px] font-semibold md:text-left uppercase tracking-wider text-zinc-400">Menu</p>
             <div className="hidden md:block"><NavLink href={HOME} icon={<House className={navIconClass} aria-hidden />}>Accueil</NavLink></div>
-            <NavLink href={PAYMENT} icon={<CreditCard className={navIconClass} aria-hidden />}>
-              Paiement
-            </NavLink>
-            <NavLink href={ADMISSION} icon={<ClipboardList className={navIconClass} aria-hidden />}>
-              Admission
-            </NavLink>
-            <NavLink href={VISA} icon={<Plane className={navIconClass} aria-hidden />}>
-              Visa
-            </NavLink>
-            <NavLink href={SCHOLARSHIP} icon={<GraduationCap className={navIconClass} aria-hidden />}>
-              Bourse
-            </NavLink>
-            {bookingHref && <a href={bookingHref} onClick={closeMenu} className={cn(navItemBase, navItemIdle)}><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-200/60 md:h-8 md:w-8"><CalendarDays className={navIconClass} /></span>Réserver un rendez-vous</a>}
-            <NavLink href={INTEGRATION} icon={<Globe className={navIconClass} aria-hidden />}>
-              Intégration
+            <NavLink href={BOOKING} icon={<CalendarDays className={navIconClass} aria-hidden />}>Réserver un rendez-vous</NavLink>
+            <NavLink href={SUPPORT} icon={<LifeBuoy className={navIconClass} aria-hidden />}>
+              Support
             </NavLink>
 </nav>
 
@@ -232,10 +219,10 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </div>
-      <nav aria-label="Navigation mobile" className={cn("fixed inset-x-0 bottom-0 z-40 grid", bookingHref ? "grid-cols-4" : "grid-cols-3", " border-t border-zinc-200 bg-white/95 px-3 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden")}>
+      <nav aria-label="Navigation mobile" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-zinc-200 bg-white/95 px-3 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden">
         <Link href={HOME} onClick={closeMenu} aria-current={isHome && !menuOpen ? "page" : undefined} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs font-medium", isHome && !menuOpen ? "text-[var(--jx-terracotta)]" : "text-zinc-500")}><House className="h-5 w-5" />Accueil</Link>
         <button type="button" aria-expanded={menuOpen} aria-controls="portal-sidebar" onClick={() => setMenuOpen(value => !value)} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs font-medium", menuOpen ? "text-[var(--jx-terracotta)]" : "text-zinc-500")}><Menu className="h-5 w-5" />Menu</button>
-        {bookingHref && <a href={bookingHref} onClick={closeMenu} className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs font-medium text-zinc-500"><CalendarDays className="h-5 w-5" />Rendez-vous</a>}
+        <Link href={BOOKING} onClick={closeMenu} aria-current={isBooking && !menuOpen ? "page" : undefined} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs font-medium", isBooking && !menuOpen ? "text-[var(--jx-terracotta)]" : "text-zinc-500")}><CalendarDays className="h-5 w-5" />Rendez-vous</Link>
         <Link href={SUPPORT} onClick={closeMenu} aria-current={isSupport && !menuOpen ? "page" : undefined} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs font-medium", isSupport && !menuOpen ? "text-[var(--jx-terracotta)]" : "text-zinc-500")}><LifeBuoy className="h-5 w-5" />Support</Link>
       </nav>
     </div>

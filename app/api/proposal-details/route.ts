@@ -1,3 +1,4 @@
+import { orientationCompletionPercent } from "@/lib/student-journey-status"
 import { NextRequest, NextResponse } from "next/server"
 import { AIRTABLE, getAirtableApiKey } from "@/lib/airtable-config"
 
@@ -22,14 +23,7 @@ export async function GET(request: NextRequest) {
     const data = await res.json()
     const fields = data.records?.[0]?.fields
     if (!fields) return NextResponse.json({ error: "Fiche d’orientation introuvable." }, { status: 404 })
-    const completionIds = ["fldmG4KgxlZIWe5yC","fldvzq0VUdgCELdRf","fldGeykWH8oKFr03M","fld1P0dI80wYuEXe1","fldgGMhu1oFDV8YbF","fldlr2jdQRHs74t9r","fldsot30LGlll8oss","fld2HHy6pgpQJmUNv","flduGDlcArGZHrWOA","fldC85ZK7TfLJc6N2","fldWgAo9MCS0PQ0Qb","fldIYBuTapsL6oHnz","fldGVRtZ7aFnr5KM0","fldUitTkCZNanMcID","fldLPAvvz286zcxz2","fldKXmKZb2TVgDfNE","fldjhqSyAPCnznYAs","fldqst8OaoMhb9xTJ","fldLQp9TJZTDadP6L","fld6WnYXTMlgzsQl3"]
-    const filled = completionIds.filter(id => {
-      const value = fields[id]
-      if (value == null) return false
-      if (Array.isArray(value)) return value.length > 0
-      return typeof value === "number" || String(value).trim() !== ""
-    }).length
-    const percent = Math.round(filled / completionIds.length * 100)
+    const percent = orientationCompletionPercent(fields)
     return NextResponse.json({ percent, groups: groups.map(group => ({ title: group.title, fields: group.fields.map(([label,id]) => ({ label, value: fields[id] ?? null })) })) })
   } catch (error) {
     console.error("[proposal-details]", error)

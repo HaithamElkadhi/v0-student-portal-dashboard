@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { AIRTABLE, getAirtableApiKey } from "@/lib/airtable-config"
 import { studentContactActivity } from "@/lib/student-contact-activity"
 import { findProspectByEmail } from "@/lib/airtable-prospects"
+import { orientationCompletionPercent, isApplicationAccepted } from "@/lib/student-journey-status"
 
 async function read(path: string) {
   const response = await fetch("https://api.airtable.com/v0/" + AIRTABLE.baseId + "/" + path, {
@@ -60,7 +61,8 @@ export async function GET(request: NextRequest) {
       approvedUniversity: textValue(f.fld2RAtd2zTwGx9S6),
       applicationsCount: typeof f.fldWY2F7bmqqzRT7Q === "number" ? f.fldWY2F7bmqqzRT7Q : applications.length,
       decisions: applications,
-      admitted: applications.filter(app => app.status.trim() === "Admitted"),
+      admitted: applications.filter(app => isApplicationAccepted(app.status)),
+      orientationPercent: orientationCompletionPercent(f),
       scholarshipStatus: textValue(f.fldRU8b7hEa0FTz7D),
       visaStatus: textValue(f.fldlO31JxYb7tM9Li),
       appointmentDate: textValue(f.fldFqV1HBszTl1XwD),
