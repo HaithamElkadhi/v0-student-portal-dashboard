@@ -160,7 +160,7 @@ export default function StudentVerification({ onSuccess, onBack, embedded = fals
         <Card className="border border-border/80 p-6 shadow-sm sm:p-7">
           {!embedded ? (
             <div className="mb-6 flex justify-center">
-              <img src="/Jeexpert Logo base.png" alt="" className="h-11 w-auto" />
+              <img src="/brand/jeexpert-symbol.png" alt="" className="h-11 w-auto" />
             </div>
           ) : null}
           <div className="mb-6">
@@ -218,7 +218,7 @@ export default function StudentVerification({ onSuccess, onBack, embedded = fals
           <Card className="border border-border/80 p-6 shadow-sm sm:p-7">
             {!embedded ? (
               <div className="mb-6 flex justify-center">
-                <img src="/Jeexpert Logo base.png" alt="" className="h-11 w-auto" />
+                <img src="/brand/jeexpert-symbol.png" alt="" className="h-11 w-auto" />
               </div>
             ) : null}
             <div className="mb-6">

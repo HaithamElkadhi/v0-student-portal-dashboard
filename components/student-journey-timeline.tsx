@@ -20,7 +20,7 @@ function hasDocument(value: unknown): boolean {
   return Array.isArray(value) ? value.length > 0 : typeof value === "string" && !!value.trim() && value.trim() !== "—"
 }
 
-const stateLabels: Record<StepState, string> = { done: "Terminé", current: "En cours", upcoming: "À venir", unknown: "À confirmer", blocked: "À revoir", soon: "Coming soon" }
+const stateLabels: Record<StepState, string> = { done: "Terminé", current: "En cours", upcoming: "À venir", unknown: "À confirmer", blocked: "À revoir", soon: "À venir" }
 type VisualState = StepState | "due" | "overdue"
 const stateStyles: Record<VisualState, { icon: string; chip: string; number: string }> = {
   done: { icon: "border-emerald-50 bg-emerald-600 text-white", chip: "bg-emerald-100 text-emerald-800", number: "text-emerald-700" },
@@ -52,26 +52,33 @@ export default function StudentJourneyTimeline({ summary, payments, summaryError
     { label: "Installation", icon: Plane, state: "soon" },
   ]
 
-  return <section aria-label="Les étapes de votre parcours" className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
-    <h2 className="text-base font-semibold text-[#173B65]">Votre parcours, étape par étape</h2>
-    <ol className="mt-6 grid grid-cols-1 gap-0 lg:grid-cols-7" aria-busy={loading}>
+  const completed = steps.filter(step => step.state === "done").length
+
+  return <section aria-labelledby="student-journey-heading" className="rounded-2xl border border-[#BCD6EC] bg-white p-5 sm:p-6">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <h2 id="student-journey-heading" className="text-xl font-semibold tracking-tight text-[#092C51] sm:text-2xl">Mon parcours</h2>
+      <p className="text-sm text-slate-600 sm:text-base">
+        {loading ? "Progression en cours de chargement…" : `${completed} étape${completed > 1 ? "s" : ""} sur ${steps.length} terminée${completed > 1 ? "s" : ""}`}
+      </p>
+    </div>
+    <ol className="mt-6 grid grid-cols-1 gap-0 xl:grid-cols-7" aria-busy={loading}>
       {steps.map(({ label, icon: Icon, state }, index) => {
         const visualState: VisualState = label === "Paiement" && state === "current" ? payments?.some(payment => payment.status === "overdue") ? "overdue" : "due" : state
         const colors = stateStyles[visualState]
         const chipLabel = visualState === "overdue" ? "En retard" : visualState === "due" ? "À régler" : stateLabels[state]
-        return <li key={label} aria-current={state === "current" ? "step" : undefined} className="relative flex min-w-0 items-center gap-4 pb-6 last:pb-0 lg:flex-col lg:gap-0 lg:pb-0 lg:text-center">
+        return <li key={label} aria-current={state === "current" ? "step" : undefined} className="relative flex min-w-0 items-center gap-4 pb-6 last:pb-0 xl:flex-col xl:gap-0 xl:pb-0 xl:text-center">
           {label === "Orientation" && <Link href="/student_italy/orientation" aria-label="Consulter ma fiche d’orientation" className="absolute inset-0 z-20 rounded-xl transition-colors hover:bg-blue-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-4" />}
           {label === "Documents" && <Link href="/student_italy/documents" aria-label="Consulter mes documents" className="absolute inset-0 z-20 rounded-xl transition-colors hover:bg-blue-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-4" />}
           {label === "Admission" && <Link href="/student_italy/admission" aria-label="Consulter mes candidatures" className="absolute inset-0 z-20 rounded-xl transition-colors hover:bg-blue-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-4" />}
           {label === "Paiement" && <Link href="/student_italy/paiement" aria-label="Consulter mes paiements" className="absolute inset-0 z-20 rounded-xl transition-colors hover:bg-blue-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-4" />}
-          {index < steps.length - 1 && <span aria-hidden="true" className={"absolute left-[31px] top-16 h-[calc(100%-4rem)] border-l-2 lg:left-1/2 lg:top-20 lg:h-0 lg:w-full lg:border-l-0 lg:border-t-2 " + (state === "done" ? "border-emerald-500" : "border-dashed border-slate-200")} />}
-          <span className={"hidden text-sm font-semibold lg:mb-5 lg:block " + colors.number}>{String(index + 1).padStart(2, "0")}</span>
-          <span className={"relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-[7px] lg:h-20 lg:w-20 " + colors.icon}>
-            <Icon className="h-6 w-6 lg:h-7 lg:w-7" strokeWidth={1.8} aria-hidden="true" />
+          {index < steps.length - 1 && <span aria-hidden="true" className={"absolute left-[31px] top-16 h-[calc(100%-4rem)] border-l-2 xl:left-1/2 xl:top-[74px] 2xl:top-[80px] xl:h-0 xl:w-full xl:border-l-0 xl:border-t-2 " + (state === "done" ? "border-emerald-500" : "border-dashed border-slate-200")} />}
+          <span className={"hidden text-sm font-semibold xl:mb-4 xl:block " + colors.number}>{String(index + 1).padStart(2, "0")}</span>
+          <span className={"relative z-10 flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-[7px] xl:h-[76px] xl:w-[76px] 2xl:h-[88px] 2xl:w-[88px] " + colors.icon}>
+            <Icon className="h-6 w-6 xl:h-7 xl:w-7" strokeWidth={1.8} aria-hidden="true" />
             {state === "done" && <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-emerald-500 text-white"><Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" /></span>}
           </span>
-          <div className="min-w-0 lg:mt-4">
-            <p className="text-sm font-semibold text-[#173B65] lg:min-h-10 lg:px-1"><span className="mr-2 text-xs text-slate-400 lg:hidden">{String(index + 1).padStart(2, "0")}</span>{label}</p>
+          <div className="min-w-0 xl:mt-4">
+            <p className="text-sm font-semibold text-[#173B65] xl:px-1 2xl:text-base"><span className="mr-2 text-xs text-slate-400 xl:hidden">{String(index + 1).padStart(2, "0")}</span>{label}</p>
             <span className={"mt-2 inline-flex rounded-full px-3 py-1 text-xs font-medium " + (loading && state !== "soon" ? "bg-slate-100 text-slate-500" : colors.chip)}>{loading && state !== "soon" ? "Chargement…" : chipLabel}</span>
           </div>
         </li>

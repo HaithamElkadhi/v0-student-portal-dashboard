@@ -3,7 +3,7 @@
 import { useState, useEffect, type ReactNode } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu"
 import StudentAppInstall from "@/components/student-app-install"
 import { LifeBuoy } from "lucide-react"
 import {
@@ -14,6 +14,10 @@ import {
   X,
   RefreshCw,
   CalendarDays,
+  ChevronDown,
+  Headset,
+  BookOpen,
+  GraduationCap,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useStudentPortal } from "@/components/student-portal-context"
@@ -28,6 +32,8 @@ const INTEGRATION = "/student_italy/integration"
 const SUPPORT = "/student_italy/support"
 const REGLEMENT = "/student_italy/reglement"
 const BOOKING = "/student_italy/rendez-vous"
+const GUIDE = "/student_italy/guide"
+const COURSES = "/student_italy/courses"
 
 function pageLabel(
   isPayment: boolean,
@@ -53,6 +59,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
 
   const closeMenu = () => setMenuOpen(false)
   const isBooking = pathname === BOOKING
+  const isGuide = pathname === GUIDE || pathname?.startsWith(GUIDE + "/")
 
   useEffect(() => {
     if (menuOpen) {
@@ -75,11 +82,10 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
   const isReglement = pathname === REGLEMENT || pathname?.startsWith(`${REGLEMENT}/`)
 
   const navItemBase =
-    "relative flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-white p-4 text-center text-sm font-medium shadow-sm md:border-0 md:shadow-none md:min-h-0 md:flex-row md:justify-start md:gap-2.5 md:rounded-lg md:py-2 md:pl-2.5 md:pr-2 md:text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--jx-terracotta)]/25"
-  const navItemIdle = "text-zinc-700 hover:bg-zinc-100"
-  const navItemActive =
-    "bg-zinc-100 font-semibold text-[var(--jx-night)] before:absolute before:bottom-1 before:left-1/2 before:h-0.5 before:w-7 before:-translate-x-1/2 md:before:bottom-auto md:before:left-0 md:before:top-1/2 md:before:h-7 md:before:w-0.5 md:before:translate-x-0 md:before:-translate-y-1/2 before:rounded-full before:bg-[var(--jx-terracotta)]"
-  const navIconClass = "h-7 w-7 shrink-0 text-[var(--jx-terracotta)] md:h-[18px] md:w-[18px] md:text-zinc-500"
+    "flex min-h-12 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173B65]"
+  const navItemIdle = "text-[#173B65] hover:bg-[#EDF7FD]"
+  const navItemActive = "bg-[#DCF2FC] font-semibold text-[#092C51]"
+  const navIconClass = "size-5 shrink-0"
 
   const NavLink = ({
     href,
@@ -100,35 +106,41 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
       (href === INTEGRATION && isIntegration) ||
       (href === SUPPORT && isSupport) ||
       (href === BOOKING && isBooking) ||
+      (href === GUIDE && isGuide) ||
+      (href === COURSES && isCourses) ||
       (href === REGLEMENT && isReglement) ||
       false
     return (
       <Link
         href={href}
         onClick={closeMenu}
+        aria-current={active ? "page" : undefined}
         className={cn(navItemBase, active ? navItemActive : navItemIdle)}
         prefetch
       >
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl md:h-8 md:w-8 md:rounded-md bg-zinc-200/60 text-zinc-600">
-          {icon}
-        </span>
+        {icon}
         {label}
       </Link>
     )
   }
 
   const isSupport = pathname === SUPPORT
+  const isCourses = pathname === COURSES
   const isDocuments = pathname === "/student_italy/documents" || pathname?.startsWith("/student_italy/documents/")
   const isOrientation = pathname === "/student_italy/orientation" || pathname?.startsWith("/student_italy/orientation/")
-  const label = isBooking ? "Rendez-vous" : isOrientation ? "Orientation" : isDocuments ? "Documents" : isSupport ? "Support" : isHome ? "Accueil" : isProfile ? "Profil" : pageLabel(isPayment, isAdmission, isVisa, isScholarship, isIntegration, isReglement)
+  const label = isCourses ? "Courses" : isGuide ? "Guide des démarches" : isBooking ? "Rendez-vous" : isOrientation ? "Orientation" : isDocuments ? "Documents" : isSupport ? "Support" : isHome ? "Accueil" : isProfile ? "Profil" : pageLabel(isPayment, isAdmission, isVisa, isScholarship, isIntegration, isReglement)
+  const firstName = studentInfo.name.trim().split(/\s+/)[0] || "Mon profil"
+  const initials = (firstName[0] + (studentInfo.surname?.[0] || "")).toUpperCase()
+  const photo = Array.isArray(studentInfo.photo) ? studentInfo.photo[0]?.url : typeof studentInfo.photo === "string" ? studentInfo.photo : null
+  const profileMenuItem = "flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 text-sm font-medium outline-none data-[highlighted]:bg-[#E8F4FB] data-[disabled]:opacity-50"
 
   return (
-    <div className="min-h-screen scroll-smooth bg-zinc-100 font-sans antialiased text-zinc-900">
+    <div className="min-h-screen bg-[#EAF5FC] font-sans antialiased text-[#172D43]">
       <div className="flex min-h-screen flex-col md:flex-row md:items-stretch">
         <aside
           id="portal-sidebar"
           className={cn(
-            "fixed inset-x-0 top-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 flex w-full flex-col overflow-y-auto bg-zinc-50 transition-opacity duration-200 ease-out md:sticky md:left-auto md:top-0 md:max-h-none md:rounded-none md:border-0 md:border-r md:translate-y-0 md:z-0 md:h-screen md:w-[14rem] md:max-w-none md:translate-x-0 md:shadow-none",
+            "fixed inset-x-0 top-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 flex w-full flex-col overflow-y-auto bg-white transition-opacity duration-200 ease-out md:sticky md:bottom-auto md:z-0 md:h-dvh md:w-52 md:shrink-0 md:border-r md:border-[#BCD6EC] xl:w-[15.5rem]",
             menuOpen ? "visible opacity-100" : "invisible opacity-0 md:visible md:opacity-100",
           )}
           aria-label="Menu de navigation"
@@ -145,34 +157,37 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
             </button>
           </div>
 
-          <div className="border-b border-zinc-100 px-3 py-3">
-            <div className="flex flex-col items-center gap-1 md:items-start">
-              <img src="/jeexpert-logo-blue.png" alt="JEEXPERT" width={180} height={60} className="h-auto w-44 object-contain" />
-              <p className="max-w-full truncate text-xs text-zinc-500"><span className="md:hidden">{studentInfo.name}</span><span className="hidden md:inline">Portail étudiant</span></p>
-            </div>
+          <div className="px-6 pb-3 pt-2">
+            <img src="/brand/jeexpert-logo.png" alt="JEEXPERT" width={1280} height={1280} className="mx-auto size-32 object-contain" />
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Portail étudiant</p>
           </div>
 
-          <nav className="grid shrink-0 grid-cols-2 content-start gap-3 p-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:flex md:flex-col md:gap-0.5 md:px-2 md:py-2" aria-label="Sections">
-            <p className="col-span-2 mb-1 px-2 text-center text-[10px] font-semibold md:text-left uppercase tracking-wider text-zinc-400">Menu</p>
-            <div className="hidden md:block"><NavLink href={HOME} icon={<House className={navIconClass} aria-hidden />}>Accueil</NavLink></div>
-            <NavLink href={BOOKING} icon={<CalendarDays className={navIconClass} aria-hidden />}>Réserver un rendez-vous</NavLink>
+          <nav className="space-y-1 px-3 py-2" aria-label="Sections">
+            <NavLink href={HOME} icon={<House className={navIconClass} aria-hidden />}>Accueil</NavLink>
+            <NavLink href={COURSES} icon={<GraduationCap className={navIconClass} aria-hidden />}>Courses</NavLink>
+            <NavLink href={GUIDE} icon={<BookOpen className={navIconClass} aria-hidden />}>Guide des démarches</NavLink>
+            <div className="md:hidden"><NavLink href={BOOKING} icon={<CalendarDays className={navIconClass} aria-hidden />}>Réserver un rendez-vous</NavLink></div>
             <NavLink href={SUPPORT} icon={<LifeBuoy className={navIconClass} aria-hidden />}>
               Support
             </NavLink>
-</nav>
+          </nav>
 
-          <div className="mt-auto shrink-0 space-y-2 border-t border-zinc-100 p-2">
+          <div className="mx-4 mt-auto shrink-0 space-y-3 border-t border-slate-100 py-4">
+            <Link href={SUPPORT} onClick={closeMenu} className="flex min-h-11 items-start gap-3 rounded-lg px-2 py-1 text-[#173B65] hover:bg-[#EDF7FD] focus-visible:outline-2 focus-visible:outline-[#173B65]">
+              <Headset className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+              <span><span className="block text-sm font-semibold">Une question ?</span><span className="block text-xs text-slate-600">Contactez notre support</span></span>
+            </Link>
             <StudentAppInstall />
 
           </div>
         </aside>
 
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-12 items-center gap-2 border-b border-zinc-200/90 bg-white/90 px-3 backdrop-blur-md sm:px-4">
+          <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-[#D5E6F3] bg-white px-3 sm:px-5 lg:px-8">
             <button
               type="button"
               onClick={() => setMenuOpen(true)}
-              className="rounded-lg border border-zinc-200 bg-white p-2 text-zinc-600 shadow-sm hover:border-zinc-300 hover:text-zinc-900 md:hidden"
+              className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl border border-[#D5E6F3] text-[#173B65] hover:bg-[#EDF7FD] focus-visible:outline-2 focus-visible:outline-[#173B65] md:hidden"
               aria-expanded={menuOpen}
               aria-controls="portal-sidebar"
               aria-label="Ouvrir le menu"
@@ -180,41 +195,32 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
               <Menu className="h-4 w-4" />
             </button>
 
-            {/* Un seul logo dans l’app : la sidebar. Ici, titre texte uniquement (mobile + desktop). */}
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-zinc-900">{label}</p>
-              <p className="truncate text-xs text-zinc-500">{studentInfo.name}</p>
+            <div className="flex min-w-0 flex-1 items-center gap-3 text-sm sm:text-base">
+              <Link href={HOME} className="hidden shrink-0 text-slate-600 hover:text-[#173B65] focus-visible:outline-2 focus-visible:outline-[#173B65] sm:inline">Espace étudiant</Link>
+              <span className="hidden text-slate-400 sm:inline" aria-hidden="true">/</span>
+              <span className="truncate font-semibold text-[#092C51]">{label}</span>
             </div>
 
-            <div className="flex min-w-0 shrink-0 items-center gap-1.5">
-              <Link href={PROFILE} onClick={closeMenu} aria-label="Mon profil" title="Mon profil" aria-current={isProfile ? "page" : undefined} className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--jx-terracotta)]/30", isProfile ? "border-[var(--jx-terracotta)] bg-[var(--jx-terracotta)]/10 text-[var(--jx-terracotta)]" : "border-zinc-200 bg-zinc-100 text-zinc-600 hover:bg-zinc-200")}>
-                <User className="h-4 w-4" aria-hidden />
-              </Link>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void reloadFromApi()}
-                disabled={isRefreshing}
-                title="Actualiser"
-                className="h-8 w-8 shrink-0 rounded-md border-zinc-200 bg-white p-0 text-zinc-600 hover:bg-zinc-50 sm:w-auto sm:px-2.5"
-              >
-                <RefreshCw className={`mx-auto h-3.5 w-3.5 sm:mx-0 ${isRefreshing ? "animate-spin" : ""}`} />
-                <span className="hidden sm:ml-1.5 sm:inline sm:text-xs">Actualiser</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onLogout}
-                title="Déconnexion"
-                className="h-8 gap-1 rounded-md border-zinc-200 bg-white px-2 text-xs text-zinc-700 hover:border-red-200 hover:bg-red-50 hover:text-red-700 sm:px-2.5"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Sortir</span>
-              </Button>
-            </div>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full p-1.5 text-[#092C51] hover:bg-[#EDF7FD] focus-visible:outline-2 focus-visible:outline-[#173B65] sm:gap-3" aria-label="Ouvrir le menu de mon compte">
+                <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#BDEAF9] text-sm font-semibold text-[#092C51] sm:size-10">
+                  {photo ? <img src={photo} alt="" className="size-full object-cover" /> : initials}
+                </span>
+                <span className="hidden max-w-36 truncate text-sm font-semibold sm:block">{firstName}</span>
+                <ChevronDown className="size-4 shrink-0" aria-hidden="true" />
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Portal>
+                <DropdownMenu.Content align="end" sideOffset={8} collisionPadding={12} className="z-50 w-52 rounded-xl border border-[#D5E6F3] bg-white p-1.5 text-[#173B65] shadow-lg">
+                  <DropdownMenu.Item asChild className={profileMenuItem}><Link href={PROFILE}><User className="size-4" aria-hidden="true" />Mon profil</Link></DropdownMenu.Item>
+                  <DropdownMenu.Item className={profileMenuItem} disabled={isRefreshing} onSelect={() => void reloadFromApi()}><RefreshCw className="size-4" aria-hidden="true" />Actualiser</DropdownMenu.Item>
+                  <DropdownMenu.Separator className="my-1 h-px bg-slate-100" />
+                  <DropdownMenu.Item className={profileMenuItem + " text-red-700"} onSelect={onLogout}><LogOut className="size-4" aria-hidden="true" />Se déconnecter</DropdownMenu.Item>
+                </DropdownMenu.Content>
+              </DropdownMenu.Portal>
+            </DropdownMenu.Root>
           </header>
 
-          <div className="flex w-full min-w-0 flex-1 flex-col px-3 pt-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-5 md:py-5">
+          <div className="flex w-full min-w-0 flex-1 flex-col px-3 pt-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:px-5 md:py-6 lg:px-8 xl:py-8">
             <div className="w-full max-w-none">{children}</div>
           </div>
         </div>

@@ -10,12 +10,16 @@ function escapeFormulaValue(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
+export function prospectEmailMatchFormula(email: string): string {
+  return `LOWER(TRIM({Email})) = "${escapeFormulaValue(email.trim().toLowerCase())}"`;
+}
+
 /**
  * Case-insensitive email match on Prospects. Returns record id or null.
  * Formula uses the field name "Email" (more reliable than field IDs in formulas).
  */
 export async function findProspectByEmail(email: string): Promise<string | null> {
-  const formula = `LOWER({Email}) = LOWER("${escapeFormulaValue(email.trim())}")`;
+  const formula = prospectEmailMatchFormula(email);
   const url = new URL(`https://api.airtable.com/v0/${baseId}/${prospects.id}`);
   url.searchParams.set("filterByFormula", formula);
   url.searchParams.set("maxRecords", "1");

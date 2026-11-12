@@ -36,12 +36,19 @@ export default function StudentItalyLayout({ children }: { children: ReactNode }
     setStudentInfoState(u)
   }, [])
 
-  const onLogout = useCallback(() => {
-    if (typeof window !== "undefined") {
-      sessionStorage.removeItem("studentInfo")
+  const onLogout = useCallback(async () => {
+    sessionStorage.removeItem("studentInfo")
+    setStudentInfoState(null)
+    if (studentInfo) {
+      const account = encodeURIComponent(JSON.stringify([String(studentInfo.email ?? "").trim().toLowerCase(), String(studentInfo.folderId ?? "").trim()]))
+      await fetch("/api/student-courses", {
+        method: "DELETE",
+        headers: { "x-course-account": account },
+        signal: AbortSignal.timeout(3000),
+      }).catch(() => {})
     }
     router.push("/")
-  }, [router])
+  }, [router, studentInfo])
 
   const reloadFromApi = useCallback(async () => {
     if (!studentInfo) return

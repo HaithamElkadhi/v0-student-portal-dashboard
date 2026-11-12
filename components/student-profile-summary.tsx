@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import StudentJourneyTimeline from "@/components/student-journey-timeline"
-import { Activity, RefreshCw, Phone, Ticket, CalendarDays, Mail, type LucideIcon } from "lucide-react"
+import { Activity, RefreshCw, Phone, Ticket, CalendarDays, Mail, LifeBuoy, type LucideIcon } from "lucide-react"
 import { useStudentPortal } from "@/components/student-portal-context"
 import type { Payment } from "@/lib/payment-types"
 
@@ -16,17 +16,22 @@ type Summary = {
   lastContactDate: string; lastContactReason: string
   mailCount: number | null; lastMail: { subject: string; date: string } | null
 }
-const activityTypes: Record<string, { label: string; icon: LucideIcon; badge: string; tile: string; row: string }> = {
-  contact: { label: "Contact", icon: Phone, badge: "bg-emerald-50 text-emerald-800", tile: "bg-emerald-600 text-white", row: "hover:bg-emerald-50/50" },
-  ticket: { label: "Ticket", icon: Ticket, badge: "bg-amber-50 text-amber-800", tile: "bg-amber-500 text-amber-950", row: "hover:bg-amber-50/50" },
-  appointment: { label: "Rendez-vous", icon: CalendarDays, badge: "bg-violet-50 text-violet-800", tile: "bg-violet-600 text-white", row: "hover:bg-violet-50/50" },
-  email: { label: "Email envoyé", icon: Mail, badge: "bg-red-50 text-red-800", tile: "bg-[#EA4335] text-white", row: "hover:bg-red-50/50" },
+const activityTypes: Record<string, { label: string; icon: LucideIcon }> = {
+  contact: { label: "Contact", icon: Phone },
+  ticket: { label: "Ticket", icon: Ticket },
+  appointment: { label: "Rendez-vous", icon: CalendarDays },
+  email: { label: "E-mail envoyé", icon: Mail },
 }
-const defaultActivityType = { label: "Activité", icon: Activity, badge: "bg-slate-100 text-slate-700", tile: "bg-slate-600 text-white", row: "hover:bg-slate-50" }
 
-function ActivityBadge({ kind }: { kind: string }) {
-  const { label, icon: Icon, badge, tile } = activityTypes[kind] || defaultActivityType
-  return <span className="inline-flex items-center gap-2"><span className={"flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm " + tile}><Icon className="h-4.5 w-4.5" aria-hidden="true" /></span><span className={"rounded-full px-2.5 py-1 text-xs font-medium " + badge}>{label}</span></span>
+const activityStatuses: Record<string, string> = {
+  Scheduled: "Planifié", Completed: "Terminé", Cancelled: "Annulé", "No-show": "Absent",
+  Done: "Terminé", Archived: "Archivé", "In Progress": "En cours", Todo: "À traiter",
+}
+
+function activityDate(value: string) {
+  if (!value || !Number.isFinite(Date.parse(value))) return "Date non renseignée"
+  const date = new Date(value.length === 10 ? value + "T12:00:00+01:00" : value)
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Tunis" })
 }
 
 function Loading() { return <div role="status" className="space-y-3"><span className="sr-only">Chargement…</span><div className="h-6 w-2/3 animate-pulse rounded bg-zinc-100" /><div className="h-4 w-1/2 animate-pulse rounded bg-zinc-100" /></div> }
@@ -79,19 +84,43 @@ export default function StudentProfileSummary() {
     return () => controller.abort()
   }, [studentInfo.email, studentInfo.folderId, isRefreshing, retry])
   const retryLoad = () => setRetry(value => value + 1)
-  return <section aria-label="Le suivi de votre dossier" className="space-y-5 sm:space-y-6">
+  return <section aria-label="Le suivi de votre dossier" className="space-y-5 sm:space-y-7">
     <StudentJourneyTimeline summary={summary} payments={payments} summaryError={summaryError} paymentError={paymentError} loading={(!summary && !summaryError) || (payments === null && !paymentError)} />
-    <article className="rounded-2xl border border-zinc-200 bg-gradient-to-br from-sky-50/70 via-white to-violet-50/40 p-4 shadow-sm sm:p-5">
-      <h2 className="text-sm font-semibold text-zinc-800">Historique des activités</h2>
-      <div className="mt-3">{summaryError ? <LoadError retry={retryLoad} /> : !summary ? <Loading /> : <>
-        {summary.activityPartial && <p className="mb-3 text-xs text-amber-700">Certaines activités sont indisponibles. Actualisez pour réessayer.</p>}
-        {!summary.activity?.length ? <p className="text-sm text-zinc-500">Aucune activité enregistrée.</p> : <ol ref={activityListRef} aria-label="Historique des activités" tabIndex={activityScrolls ? 0 : undefined} style={{ maxHeight: activityMaxHeight }} className="space-y-3 overflow-y-auto overscroll-y-contain rounded-xl pr-2 [scrollbar-gutter:stable] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173B65]">{summary.activity.map(event => <li key={event.key} className={"rounded-xl border border-zinc-100 bg-white p-3 transition-colors motion-reduce:transition-none sm:p-4 " + (activityTypes[event.kind] || defaultActivityType).row}>
-          <div className="flex flex-wrap items-center justify-between gap-2"><ActivityBadge kind={event.kind} /><time className="text-xs text-zinc-400">{event.at && Number.isFinite(Date.parse(event.at)) ? new Date(event.at.length === 10 ? event.at + "T12:00:00+01:00" : event.at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Tunis" }) : "Date non renseignée"}</time></div>
-          <p className="mt-2 whitespace-pre-wrap break-words text-sm text-zinc-800">{event.title}</p>
-          {event.appointmentAt && <p className="mt-1 text-xs text-zinc-500">Prévu le {new Date(event.appointmentAt).toLocaleString("fr-FR", { timeZone: "Africa/Tunis", dateStyle: "medium", timeStyle: "short" })}</p>}
-          {event.status && event.kind !== "email" && <p className="mt-1 text-xs text-zinc-500">{{ Scheduled: "Planifié", Completed: "Terminé", Cancelled: "Annulé", "No-show": "Absent", Done: "Terminé", Archived: "Archivé", "In Progress": "En cours", Todo: "À traiter" }[event.status] || event.status}</p>}
-        </li>)}</ol>}
-      </>}</div>
-    </article>
+    <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)] xl:gap-6">
+      <article className="min-w-0 rounded-2xl border border-[#BCD6EC] bg-white p-5 sm:p-6">
+        <h2 className="text-xl font-semibold tracking-tight text-[#092C51] sm:text-2xl">Activité récente</h2>
+        <div className="mt-3">
+          {summaryError ? <LoadError retry={retryLoad} /> : !summary ? <Loading /> : <>
+            {summary.activityPartial && <p className="mb-3 text-xs text-amber-700">Certaines activités sont indisponibles. Actualisez pour réessayer.</p>}
+            {!summary.activity?.length ? <p className="py-4 text-sm text-slate-600">Aucune activité enregistrée.</p> : (
+              <ol ref={activityListRef} aria-label="Historique des activités" tabIndex={activityScrolls ? 0 : undefined} style={{ maxHeight: activityMaxHeight }} className="divide-y divide-slate-200 overflow-y-auto overscroll-y-contain rounded-lg pr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#173B65]">
+                {summary.activity.map(event => {
+                  const { label, icon: Icon } = activityTypes[event.kind] || { label: "Activité", icon: Activity }
+                  return <li key={event.key} className="flex min-w-0 items-start gap-3 py-3 sm:gap-4">
+                    <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#E8F4FB] text-[#173B65] sm:size-12"><Icon className="size-5" aria-hidden="true" /></span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                        <h3 className="text-sm font-semibold text-[#092C51] sm:text-base">{label}</h3>
+                        <time className="text-xs text-slate-600 sm:text-sm">{activityDate(event.at)}</time>
+                      </div>
+                      <p className="mt-0.5 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700">{event.title}</p>
+                      {event.appointmentAt && <p className="mt-1 text-xs text-slate-600">Prévu le {new Date(event.appointmentAt).toLocaleString("fr-FR", { timeZone: "Africa/Tunis", dateStyle: "medium", timeStyle: "short" })}</p>}
+                      {event.status && event.kind !== "email" && <p className="mt-1 text-xs text-slate-600">{activityStatuses[event.status] || event.status}</p>}
+                    </div>
+                  </li>
+                })}
+              </ol>
+            )}
+          </>}
+        </div>
+      </article>
+      <aside aria-labelledby="student-help-heading" className="flex h-full flex-col rounded-2xl border border-[#BCD6EC] bg-white p-5 sm:p-6">
+        <h2 id="student-help-heading" className="text-xl font-semibold tracking-tight text-[#092C51] sm:text-2xl">Besoin d’aide ?</h2>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">Contactez votre équipe JEEXPERT.</p>
+        <a href="https://wa.me/393520880880" target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 border-[#173B65] px-4 py-2 text-center text-sm font-semibold text-[#173B65] transition-colors hover:bg-[#E8F4FB] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#173B65]">
+          <LifeBuoy className="size-4 shrink-0 xl:hidden" aria-hidden="true" /> Contacter JEEXPERT
+        </a>
+      </aside>
+    </div>
   </section>
 }

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { recordStudentLogin } from "@/lib/student-login-history"
-import { setDocumentSession } from "@/lib/student-document-session"
+import { setCourseSession, setDocumentSession } from "@/lib/student-document-session"
+import { prospectEmailMatchFormula } from "@/lib/airtable-prospects"
+import { escapeAirtableFormulaString } from "@/lib/airtable-payments-query"
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID
@@ -9,7 +11,8 @@ const AIRTABLE_TABLE_ID = process.env.AIRTABLE_TABLE_ID
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, folderId } = body
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : ""
+    const folderId = typeof body.folderId === "string" ? body.folderId.trim() : ""
 
     if (!email && !folderId) {
       return NextResponse.json(
@@ -31,14 +34,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Build the filter formula
-    let filterFormula = ""
-    if (email && folderId) {
-      filterFormula = `OR({Email} = "${email}", {Prospect ID} = "${folderId}")`
-    } else if (email) {
-      filterFormula = `{Email} = "${email}"`
-    } else if (folderId) {
-      filterFormula = `{Prospect ID} = "${folderId}"`
-    }
+    const emailFilter = email ? prospectEmailMatchFormula(email) : ""
+    const folderFilter = folderId ? `{Prospect ID} = "${escapeAirtableFormulaString(folderId)}"` : ""
+    const filterFormula = emailFilter && folderFilter ? `OR(${emailFilter}, ${folderFilter})` : emailFilter || folderFilter
 
     // Query Airtable - encode table name properly
     const encodedTableId = encodeURIComponent(AIRTABLE_TABLE_ID)
@@ -206,7 +204,7 @@ export async function POST(request: NextRequest) {
       contratSigned: fields["Contrat_Signed"] === true,
       name: getFieldValue(["Name", "name"]),
       surname: getFieldValue(["Surname", "Last Name", "surname", "last name", "Last Name", "Family Name"]),
-      email: getFieldValue(["Email", "email", "Email Address", "email address"]) || email || "",
+      email: String(getFieldValue(["Email", "email", "Email Address", "email address"]) || email).trim(),
       folderId: getFieldValue(["Prospect ID", "prospect id", "Folder ID", "folder id", "ProspectID", "FolderID"]) || folderId || "",
       phone: getFieldValue(["Phone", "phone", "Phone Number", "phone number", "Mobile", "mobile", "Tel", "tel"]),
       whatsapp: getFieldValue(["WhatsApp", "whatsapp", "Whatsapp", "WhatsApp Number", "whatsapp number"]),
@@ -386,8 +384,14 @@ export async function POST(request: NextRequest) {
       success: true,
       student: studentInfo,
     })
-    if (typeof email === "string" && typeof folderId === "string" && email.trim().toLowerCase() === String(studentInfo.email).trim().toLowerCase() && folderId.trim() === String(studentInfo.folderId).trim()) {
-      setDocumentSession(verifiedResponse, { id: record.id, email: String(studentInfo.email), folderId: String(studentInfo.folderId) })
+    const identity = { id: record.id, email: String(studentInfo.email), folderId: String(studentInfo.folderId) }
+    const matchesEmail = email === identity.email.trim().toLowerCase()
+    const matchesFolder = folderId === identity.folderId.trim()
+    if (matchesEmail && matchesFolder) {
+      setDocumentSession(verifiedResponse, identity)
+    }
+    if ((!email || matchesEmail) && (!folderId || matchesFolder)) {
+      setCourseSession(verifiedResponse, { ...identity, folderId: identity.folderId.trim() })
     }
     return verifiedResponse
   } catch (error) {

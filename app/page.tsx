@@ -15,15 +15,13 @@ export default function Page() {
   }
 
   return (
-    <main className="flex min-h-dvh justify-center bg-[var(--jx-night)] p-3 font-normal md:min-h-screen md:items-center md:p-5">
-      <div className="flex min-h-[calc(100dvh-24px)] w-full max-w-[1280px] flex-col overflow-hidden rounded-[20px] md:h-[min(100dvh,900px)] md:max-h-[calc(100vh-40px)] md:min-h-0 md:flex-row">
+    <main className="flex min-h-dvh items-center justify-center bg-[var(--jx-night)] p-3 font-normal md:p-6">
+      <div className="flex w-full max-w-md flex-col overflow-hidden rounded-2xl shadow-xl md:min-h-[620px] md:max-w-[1120px] md:flex-row">
         <ItalianSunsetPanel variant="banner" />
         <ItalianSunsetPanel variant="full" />
 
-        <section className="flex min-h-0 w-full flex-1 flex-col justify-center bg-white md:w-[420px] md:flex-none md:shrink-0">
-          <div className="jx-login-surface flex min-h-0 flex-1 flex-col justify-center overflow-y-auto overscroll-contain px-9 py-10 md:py-10">
-            <PortalLoginForm onSuccess={handleSuccess} />
-          </div>
+        <section className="flex w-full flex-col justify-center bg-white px-6 py-8 sm:px-10 md:w-[46%] md:min-w-[350px] md:shrink-0 md:py-10 lg:px-12">
+          <PortalLoginForm onSuccess={handleSuccess} />
         </section>
       </div>
     </main>

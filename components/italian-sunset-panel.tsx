@@ -1,211 +1,123 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { useState } from "react"
+import { Pause, Play } from "lucide-react"
+import styles from "./italian-sunset-panel.module.css"
 
-type Variant = "full" | "banner"
-
-function Star({ cx, cy, r, dur, begin }: { cx: number; cy: number; r: number; dur: string; begin: string }) {
-  return (
-    <circle cx={cx} cy={cy} r={r} fill="#ffffff">
-      <animate attributeName="opacity" values="0.2;1;0.2" dur={dur} begin={begin} repeatCount="indefinite" />
-    </circle>
-  )
+function Rome() {
+  return <svg viewBox="0 0 560 620" preserveAspectRatio="xMidYMid slice" className={styles.landscape}>
+    <defs><linearGradient id="rome-sky" x2="0" y2="1"><stop stopColor="#20133d" /><stop offset=".48" stopColor="#875166" /><stop offset="1" stopColor="#ecad6c" /></linearGradient></defs>
+    <rect width="560" height="620" fill="url(#rome-sky)" />
+    <circle cx="401" cy="264" r="65" fill="#f9bd78" opacity=".22" />
+    <circle cx="401" cy="264" r="45" fill="#ffcf8a" />
+    <path d="M0 365Q90 328 180 371T355 362T560 360V620H0Z" fill="#623b58" />
+    <path d="M0 440h76v-38h29v-18h33v88h266v-58h28v-18h55v26h73v198H0Z" fill="#4a304c" />
+    <path d="M92 461v-97q0-24 24-29l225-31 46 10v38l51 9v100Z" fill="#4a2d46" />
+    <path d="M92 461v-97q0-24 24-29l225-31v157Z" fill="#a36357" />
+    <path d="M101 347l239-35M94 374l247-24M93 411l247-17" stroke="#e59c6b" strokeWidth="4" opacity=".75" />
+    {[0, 1, 2].map(row => <g key={row} fill={row === 2 ? "#2d2039" : "#633b4c"}>
+      {Array.from({ length: 9 }, (_, col) => {
+        const x = 110 + col * 25
+        const y = 380 + row * 33 - col * (row === 2 ? 0 : 2)
+        return <path key={col} d={`M${x} ${y}v-11a7 7 0 0 1 14 0v11Z`} />
+      })}
+    </g>)}
+    <path d="M341 304l46 10v38l51 9v100h-97Z" fill="#724353" />
+    <path d="M358 446v-27a9 9 0 0 1 18 0v27m15 0v-25a9 9 0 0 1 18 0v25" fill="#36243d" />
+    <path d="M0 468Q160 450 292 467T560 466V620H0Z" fill="#2d243e" />
+  </svg>
 }
 
-function BuildingWindows({
-  x,
-  y,
-  cols,
-  rows,
-  cellW,
-  cellH,
-  gap,
-}: {
-  x: number
-  y: number
-  cols: number
-  rows: number
-  cellW: number
-  cellH: number
-  gap: number
-}) {
-  const els: ReactNode[] = []
-  let i = 0
-  const opacities = [0.35, 0.55, 0.45, 0.65, 0.4, 0.5, 0.7, 0.32]
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
-      const fill = i % 3 === 0 ? "#f5c87a" : "#e8893a"
-      els.push(
-        <rect
-          key={i}
-          x={x + col * (cellW + gap)}
-          y={y + row * (cellH + gap)}
-          width={cellW}
-          height={cellH}
-          fill={fill}
-          opacity={opacities[i % opacities.length]}
-        />,
-      )
-      i++
-    }
-  }
-  return <g>{els}</g>
+function Tuscany() {
+  return <svg viewBox="0 0 560 620" preserveAspectRatio="xMidYMid slice" className={styles.landscape}>
+    <defs><linearGradient id="tuscany-sky" x2="0" y2="1"><stop stopColor="#223f55" /><stop offset=".52" stopColor="#819584" /><stop offset="1" stopColor="#f5c781" /></linearGradient></defs>
+    <rect width="560" height="620" fill="url(#tuscany-sky)" />
+    <circle cx="375" cy="250" r="48" fill="#ffe1a4" />
+    <path className={styles.cloud} d="M54 225c17-8 23-2 35-8 15-8 25-3 36 8h27a5 5 0 0 1 0 10H58a6 6 0 0 1-4-10Z" fill="#fff2cb" opacity=".44" />
+    <path d="M0 353Q90 306 209 345T418 327T560 338V620H0Z" fill="#647867" />
+    <path d="M0 394Q104 337 220 383T424 363T560 383V620H0Z" fill="#818956" />
+    <path d="M0 437Q143 368 282 419T560 415V620H0Z" fill="#b5a66a" />
+    <path d="M0 468Q124 413 283 460T560 445V620H0Z" fill="#556346" />
+    <path d="M0 495q126-70 258-34t302 10v149H0Z" fill="#354c40" />
+    <path d="M164 500q123-82 268-69-135 6-226 69Z" fill="#e8c183" opacity=".68" />
+    <path d="M350 379h57v36h-57Z" fill="#e7bb84" /><path d="m343 380 36-24 37 24Z" fill="#8d4c3d" />
+    <path d="M367 390h8v10h-8zm16 0h8v10h-8zm-7 16h11v10h-11Z" fill="#694938" />
+    {[{ x: 321, y: 416, s: 1 }, { x: 338, y: 417, s: .82 }, { x: 422, y: 421, s: 1.1 }, { x: 442, y: 426, s: .85 }, { x: 153, y: 455, s: 1.3 }, { x: 131, y: 460, s: .95 }].map(({ x, y, s }) => (
+      <g key={x} transform={`translate(${x} ${y}) scale(${s})`} fill="#2d493d">
+        <path d="M-2 0v-16C-13-20-8-52 0-61c9 10 14 42 2 45V0Z" />
+      </g>
+    ))}
+  </svg>
 }
 
-export function ItalianSunsetPanel({ variant }: { variant: Variant }) {
+function Venice() {
+  return <svg viewBox="0 0 560 620" preserveAspectRatio="xMidYMid slice" className={styles.landscape}>
+    <defs><linearGradient id="venice-sky" x2="0" y2="1"><stop stopColor="#132d50" /><stop offset=".56" stopColor="#6e849a" /><stop offset="1" stopColor="#e3b392" /></linearGradient></defs>
+    <rect width="560" height="620" fill="url(#venice-sky)" />
+    <circle cx="122" cy="236" r="37" fill="#f8deb1" />
+    <path d="M0 414h560v206H0Z" fill="#30596e" />
+    {[{ x: 0, y: 329, w: 76, color: "#bd826e" }, { x: 76, y: 307, w: 63, color: "#d1a784" }, { x: 139, y: 345, w: 68, color: "#996d6d" }, { x: 384, y: 336, w: 62, color: "#bc8e7c" }, { x: 446, y: 307, w: 71, color: "#cfab87" }, { x: 517, y: 328, w: 43, color: "#a86f66" }].map(({ x, y, w, color }) => <g key={x}>
+      <path d={`M${x} ${y}h${w}V424H${x}Z`} fill={color} />
+      <path d={`M${x - 3} ${y}l${w / 2 + 3} -15 ${w / 2 + 3} 15Z`} fill="#654c61" />
+      {[0, 1].map(row => <g key={row}>{[0, 1].map(col => <path key={col} className={styles.window} d={`M${x + 12 + col * 18} ${y + 34 + row * 29}v-10a5 5 0 0 1 10 0v10Z`} fill="#ffe1a3" />)}</g>)}
+    </g>)}
+    <path d="M203 402l37-40h102l47 40v23h-38c-18-56-92-56-111 0h-37Z" fill="#ead4ac" />
+    <path d="M206 402l35-38h100l45 38M220 397h150" fill="none" stroke="#b99480" strokeWidth="4" />
+    <path className={styles.reflections} d="M25 438h68m14 15h58m267-14h68m-151 30h103M30 479h102m40 19h60m143 9h90" fill="none" stroke="#f6c491" strokeWidth="3" strokeLinecap="round" />
+    <g className={styles.gondola} fill="#182f49">
+      <path d="M166 476q21 9 93 2l18-13-8 18q-8 12-65 8-22 0-38-15Z" />
+      <circle cx="244" cy="452" r="5" /><path d="m238 460 10-1 3 20h-16Z" />
+      <path d="m248 464 35 29" fill="none" stroke="#182f49" strokeWidth="3" strokeLinecap="round" />
+    </g>
+  </svg>
+}
+
+const stops = [
+  { name: "Roma", detail: "Le Colisée", scene: Rome, className: styles.rome },
+  { name: "Toscana", detail: "Les collines et les cyprès", scene: Tuscany, className: styles.tuscany },
+  { name: "Venezia", detail: "Le Grand Canal", scene: Venice, className: styles.venice },
+]
+
+export function ItalianSunsetPanel({ variant }: { variant: "full" | "banner" }) {
+  const [paused, setPaused] = useState(false)
+
   if (variant === "banner") {
-    return (
-      <div
-        className="jx-left-panel-enter relative h-[100px] w-full shrink-0 overflow-hidden md:hidden"
-        style={{
-          background:
-            "linear-gradient(180deg, #0d0520 0%, #1c1240 28%, #3d1f6b 52%, #c4612f 78%, #e8893a 88%, #f5c87a 100%)",
-        }}
-      >
-        <div
-          className="jx-shimmer-sun pointer-events-none absolute left-1/2 top-[42%] size-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f5c87a]"
-          aria-hidden
-        />
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 pt-1">
-          <p className="text-xl font-medium tracking-[0.06em] text-white">JEEXPERT</p>
-          <div className="flex gap-1">
-            <span className="h-1 w-7 rounded-sm bg-[#009246]" />
-            <span className="h-1 w-7 rounded-sm bg-white" />
-            <span className="h-1 w-7 rounded-sm bg-[#ce2b37]" />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div
-      className="jx-left-panel-enter relative hidden min-h-0 w-full flex-1 overflow-hidden md:flex"
-      style={{
-        background:
-          "linear-gradient(180deg, #0d0520 0%, #1c1240 30%, #3d1f6b 55%, #c4612f 75%, #e8893a 88%, #f5c87a 100%)",
-      }}
-    >
-      <svg
-        className="pointer-events-none absolute inset-x-0 top-0 h-[25%] w-full"
-        viewBox="0 0 520 120"
-        preserveAspectRatio="xMidYMin slice"
-      >
-        <Star cx={40} cy={24} r={1.5} dur="2.4s" begin="0s" />
-        <Star cx={120} cy={18} r={1} dur="3.1s" begin="0.3s" />
-        <Star cx={200} cy={32} r={2} dur="2.1s" begin="0.8s" />
-        <Star cx={280} cy={14} r={1} dur="3.8s" begin="0.1s" />
-        <Star cx={360} cy={28} r={1.5} dur="2.7s" begin="1.1s" />
-        <Star cx={440} cy={20} r={1} dur="4s" begin="0.5s" />
-        <Star cx={480} cy={36} r={2} dur="2.9s" begin="1.4s" />
-        <Star cx={90} cy={44} r={1} dur="3.3s" begin="0.2s" />
-        <Star cx={320} cy={48} r={1.5} dur="2.5s" begin="0.9s" />
-      </svg>
-
-      <div
-        className="jx-shimmer-sun pointer-events-none absolute left-1/2 top-[38%] size-[130px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[rgba(245,200,122,0.18)]"
-        aria-hidden
-      />
-      <div
-        className="jx-shimmer-sun pointer-events-none absolute left-1/2 top-[38%] size-[70px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f5c87a]"
-        aria-hidden
-      />
-
-      <div
-        className="jx-float-cloud pointer-events-none absolute left-[8%] top-[18%] h-[22px] w-[90px] rounded-[40px] bg-[rgba(255,220,160,0.18)]"
-        style={{ animationDelay: "0s" }}
-        aria-hidden
-      />
-      <div
-        className="jx-float-cloud pointer-events-none absolute left-[52%] top-[22%] h-4 w-[60px] rounded-[40px] bg-[rgba(255,220,160,0.18)]"
-        style={{ animationDelay: "0.6s" }}
-        aria-hidden
-      />
-      <div
-        className="jx-float-cloud pointer-events-none absolute left-[32%] top-[28%] h-3 w-11 rounded-[40px] bg-[rgba(255,220,160,0.18)]"
-        style={{ animationDelay: "1.2s" }}
-        aria-hidden
-      />
-
-      <svg
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-[min(52%,320px)] w-full"
-        viewBox="0 0 520 280"
-        preserveAspectRatio="xMidYMax meet"
-      >
-        <g>
-          <rect x="4" y="118" width="36" height="64" fill="#1e1540" />
-          <rect x="14" y="132" width="8" height="18" fill="#0d0520" opacity="0.65" />
-          <BuildingWindows x={10} y={124} cols={2} rows={2} cellW={6} cellH={5} gap={4} />
-
-          <rect x="38" y="92" width="42" height="90" fill="#241848" />
-          <rect x="52" y="108" width="10" height="28" fill="#0d0520" opacity="0.6" />
-          <BuildingWindows x={44} y={98} cols={3} rows={3} cellW={5} cellH={5} gap={3} />
-          <polygon points="59,92 59,78 72,86 85,78 85,92" fill="#3d2a6e" />
-
-          <rect x="78" y="104" width="34" height="78" fill="#2d1f55" />
-          <rect x="88" y="124" width="8" height="22" fill="#0d0520" opacity="0.55" />
-          <BuildingWindows x={82} y={110} cols={2} rows={3} cellW={6} cellH={5} gap={4} />
-
-          <rect x="110" y="72" width="28" height="110" fill="#1e1540" />
-          <rect x="120" y="96" width="6" height="86" fill="#0d0520" opacity="0.5" />
-          <BuildingWindows x={114} y={78} cols={2} rows={5} cellW={5} cellH={6} gap={3} />
-          <rect x="123" y="66" width="4" height="8" fill="#c4612f" />
-
-          <rect x="136" y="100" width="48" height="82" fill="#3d2a6e" />
-          <rect x="152" y="118" width="12" height="32" fill="#0d0520" opacity="0.55" />
-          <BuildingWindows x={142} y={106} cols={4} rows={3} cellW={5} cellH={5} gap={3} />
-
-          <rect x="182" y="88" width="38" height="94" fill="#241848" />
-          <polygon points="201,88 201,70 212,78 223,70 223,88" fill="#554090" />
-          <rect x="196" y="108" width="8" height="24" fill="#0d0520" opacity="0.6" />
-          <BuildingWindows x={188} y={94} cols={3} rows={4} cellW={5} cellH={5} gap={3} />
-
-          <rect x="218" y="62" width="32" height="120" fill="#2d1f55" />
-          <rect x="228" y="82" width="8" height="100" fill="#0d0520" opacity="0.45" />
-          <BuildingWindows x={222} y={68} cols={2} rows={6} cellW={6} cellH={6} gap={4} />
-
-          <rect x="248" y="96" width="44" height="86" fill="#4a3480" />
-          <rect x="262" y="118" width="12" height="30" fill="#0d0520" opacity="0.55" />
-          <BuildingWindows x={254} y={102} cols={3} rows={3} cellW={6} cellH={6} gap={4} />
-
-          <rect x="288" y="110" width="36" height="72" fill="#1e1540" />
-          <rect x="300" y="128" width="8" height="20" fill="#0d0520" opacity="0.6" />
-          <BuildingWindows x={294} y={116} cols={2} rows={2} cellW={7} cellH={6} gap={4} />
-
-          <rect x="322" y="84" width="40" height="98" fill="#3d2a6e" />
-          <rect x="334" y="104" width="10" height="36" fill="#0d0520" opacity="0.55" />
-          <BuildingWindows x={328} y={90} cols={3} rows={4} cellW={5} cellH={5} gap={3} />
-          <polygon points="342,84 342,72 352,78 362,72 362,84" fill="#554090" />
-
-          <rect x="360" y="100" width="50" height="82" fill="#241848" />
-          <rect x="376" y="122" width="12" height="28" fill="#0d0520" opacity="0.55" />
-          <BuildingWindows x={368} y={108} cols={4} rows={3} cellW={5} cellH={5} gap={2} />
-
-          <rect x="408" y="76" width="36" height="106" fill="#2d1f55" />
-          <rect x="418" y="96" width="10" height="86" fill="#0d0520" opacity="0.5" />
-          <BuildingWindows x={412} y={82} cols={2} rows={5} cellW={6} cellH={6} gap={4} />
-
-          <rect x="442" y="112" width="74" height="70" fill="#1e1540" />
-          <rect x="468" y="132" width="14" height="24" fill="#0d0520" opacity="0.55" />
-          <BuildingWindows x={450} y={118} cols={5} rows={2} cellW={5} cellH={5} gap={3} />
-        </g>
-
-        <rect x="0" y="218" width="520" height="62" fill="#1a3a6b" opacity="0.85" />
-        <ellipse cx="140" cy="222" rx="48" ry="10" fill="#f5c87a" opacity="0.12" />
-        <ellipse cx="268" cy="224" rx="72" ry="12" fill="#e8893a" opacity="0.1" />
-        <ellipse cx="400" cy="223" rx="56" ry="9" fill="#f5c87a" opacity="0.11" />
-        <rect x="0" y="228" width="520" height="2.5" fill="#f5c87a" className="jx-water-shimmer" />
-      </svg>
-
-      <div className="pointer-events-none absolute bottom-[72px] left-1/2 z-10 w-full max-w-md -translate-x-1/2 px-6 text-center md:bottom-20">
-        <p className="text-[28px] font-medium tracking-[0.06em] text-white">JEEXPERT</p>
-        <p className="mt-2 text-[13px] font-normal tracking-[0.04em] text-white/60">La tua porta verso l&apos;Italia</p>
-        <div className="mt-3 flex justify-center gap-1">
-          <span className="h-1 w-7 rounded-sm bg-[#009246]" />
-          <span className="h-1 w-7 rounded-sm bg-white" />
-          <span className="h-1 w-7 rounded-sm bg-[#ce2b37]" />
-        </div>
+    return <div className={styles.banner + " relative h-[100px] w-full shrink-0 overflow-hidden md:hidden"} aria-hidden="true">
+      <span className="absolute left-1/2 top-1/2 size-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f5c87a]" />
+      <div className="absolute inset-x-0 bottom-4 flex justify-center gap-1">
+        <span className="h-1 w-7 rounded-sm bg-[#009246]" /><span className="h-1 w-7 rounded-sm bg-white" /><span className="h-1 w-7 rounded-sm bg-[#ce2b37]" />
       </div>
     </div>
-  )
+  }
+
+  return <aside className={styles.journey + " relative hidden min-w-0 flex-1 overflow-hidden md:block"} data-paused={paused} aria-label="Voyage illustré en Italie">
+    <div aria-hidden="true">
+      {stops.map(({ name, detail, scene: Scene, className }) => <div key={name} className={styles.scene + " " + className}>
+        <Scene />
+        <div className="absolute left-7 top-8 text-white lg:left-10">
+          <p className="text-3xl font-semibold tracking-tight" lang="it">{name}</p>
+          <p className="mt-1 text-sm text-white/90">{detail}</p>
+        </div>
+      </div>)}
+      <div className={styles.rail}>
+        <svg className={styles.train} viewBox="0 0 260 40">
+          <path d="M4 27V12a7 7 0 0 1 7-7h175c24 0 46 7 64 20a4 4 0 0 1-2 7H9a5 5 0 0 1-5-5Z" fill="#f7eadc" />
+          <path d="M5 25h243l3 4-3 3H9a5 5 0 0 1-4-3Z" fill="#cb6258" />
+          <path d="M10 12h27v9H10zm34 0h27v9H44zm35 0h27v9H79zm34 0h27v9h-27zm35 0h27v9h-27zm35 0h12q18 2 33 9h-45Z" fill="#466781" />
+          <path d="M76 6v25m71-25v25" stroke="#b8aead" strokeWidth="2" />
+          <path d="M17 33h20v4H17zm54 0h20v4H71zm96 0h20v4h-20zm49 0h20v4h-20Z" fill="#14223b" />
+        </svg>
+      </div>
+    </div>
+
+    <button type="button" onClick={() => setPaused(value => !value)} aria-label={paused ? "Reprendre l’animation" : "Mettre l’animation en pause"} className={styles.pause + " absolute right-5 top-5 z-10 flex size-11 items-center justify-center rounded-full border border-white/25 bg-slate-950/35 text-white hover:bg-slate-950/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"}>
+      {paused ? <Play className="size-4" aria-hidden="true" /> : <Pause className="size-4" aria-hidden="true" />}
+    </button>
+
+    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#12182f] via-[#12182f]/95 to-transparent px-6 pb-6 pt-10 text-center text-white">
+      <p className="text-lg font-semibold" lang="it">La tua porta verso l&apos;Italia</p>
+      <p className="mt-1 text-xs text-white/75">De Rome à Venise, en passant par la Toscane</p>
+      <div className="mt-3 flex justify-center gap-1" aria-hidden="true"><span className="h-1 w-6 rounded-sm bg-[#009246]" /><span className="h-1 w-6 rounded-sm bg-white" /><span className="h-1 w-6 rounded-sm bg-[#ce2b37]" /></div>
+    </div>
+  </aside>
 }

@@ -16,11 +16,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: "/Jeexpert Logo base.png",
+        url: "/brand/jeexpert-icon-32.png",
         type: "image/png",
       },
     ],
-    apple: "/icons/pwa-192.png",
+    apple: "/brand/jeexpert-icon-192.png",
   },
 }
 
