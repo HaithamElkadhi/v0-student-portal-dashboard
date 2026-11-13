@@ -91,10 +91,10 @@ function toast(message) {
   toastTimer = setTimeout(() => { el('toast').hidden = true; }, 2600);
 }
 function course(row) {
-  const [id, it, en, university, campus, degree, language, year, admission, method, teaching, delivery, code, discipline, level, area, partners, updated, url, duration, credits, fee, deadline, status] = row;
+  const [id, it, en, university, campus, degree, language, year, admission, method, teaching, delivery, code, discipline, level, area, partners, updated, url, duration, credits, fee, deadline, status, requirements] = row;
   const title = en || it || 'Course name unavailable';
   const searchable = normalize([it, en, university, campus, degree, label(degree), language, label(language), code, discipline, area].join(' '));
-  return {id,it,en,university,campus,degree,language,year,admission,method,teaching,delivery,code,discipline,level,area,partners,updated,url,duration,credits,fee,deadline,status:status || unknown,title,searchable,words:[...new Set(searchable.split(' '))],titleKey:normalize([it,en].join(' '))};
+  return {id,it,en,university,campus,degree,language,year,admission,method,requirements,teaching,delivery,code,discipline,level,area,partners,updated,url,duration,credits,fee,deadline,status:status || unknown,title,searchable,words:[...new Set(searchable.split(' '))],titleKey:normalize([it,en].join(' '))};
 }
 function fill(id, values, title) {
   el(id).innerHTML = '<option value="">' + title + '</option>' + [...new Set(values.filter(Boolean))]
@@ -208,7 +208,8 @@ function detail(c) {
   const facts = [
     ['Degree',label(c.degree)],['Teaching language',label(c.language)],['Campus',c.campus],['Academic year',c.year],
     ['Duration',c.duration && c.duration + ' years'],['Credits',c.credits && c.credits + ' CFU'],
-    ['Class code',c.code],['Admission type',c.admission],['Admission method',c.method],['Delivery method',c.delivery],
+    ['Class code',c.code],['Admission type',c.admission],['Delivery method',c.delivery],
+    ['Admission method',c.method || unknown],['Admission requirements',c.requirements || unknown],
     ['Application status',c.status],['Application deadline',c.deadline ? formatDate(c.deadline) : unknown],['Application fee',c.fee || unknown],
   ];
   let url;
