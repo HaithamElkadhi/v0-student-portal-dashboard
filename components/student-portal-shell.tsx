@@ -126,9 +126,10 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
 
   const isSupport = pathname === SUPPORT
   const isCourses = pathname === COURSES
+  const isPreparation = pathname === "/student_italy/preparation" || pathname?.startsWith("/student_italy/preparation/")
   const isDocuments = pathname === "/student_italy/documents" || pathname?.startsWith("/student_italy/documents/")
   const isOrientation = pathname === "/student_italy/orientation" || pathname?.startsWith("/student_italy/orientation/")
-  const label = isCourses ? "Courses" : isGuide ? "Guide des démarches" : isBooking ? "Rendez-vous" : isOrientation ? "Orientation" : isDocuments ? "Documents" : isSupport ? "Support" : isHome ? "Accueil" : isProfile ? "Profil" : pageLabel(isPayment, isAdmission, isVisa, isScholarship, isIntegration, isReglement)
+  const label = pathname === "/listedocuments" ? "Liste des documents" : isCourses ? "Courses" : isGuide ? "Guide des démarches" : isBooking ? "Rendez-vous" : isOrientation ? "Orientation" : isPreparation ? "Préparation" : isDocuments ? "Documents" : isSupport ? "Support" : isHome ? "Accueil" : isProfile ? "Profil" : pageLabel(isPayment, isAdmission, isVisa, isScholarship, isIntegration, isReglement)
   const firstName = studentInfo.name.trim().split(/\s+/)[0] || "Mon profil"
   const initials = (firstName[0] + (studentInfo.surname?.[0] || "")).toUpperCase()
   const photo = Array.isArray(studentInfo.photo) ? studentInfo.photo[0]?.url : typeof studentInfo.photo === "string" ? studentInfo.photo : null
@@ -198,7 +199,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
             <div className="flex min-w-0 flex-1 items-center gap-3 text-sm sm:text-base">
               <Link href={HOME} className="hidden shrink-0 text-slate-600 hover:text-[#173B65] focus-visible:outline-2 focus-visible:outline-[#173B65] sm:inline">Espace étudiant</Link>
               <span className="hidden text-slate-400 sm:inline" aria-hidden="true">/</span>
-              <span className="truncate font-semibold text-[#092C51]">{label}</span>
+              <span className="truncate font-semibold text-[#092C51]">{pathname === "/traduction" ? "Traduction" : label}</span>
             </div>
 
             <DropdownMenu.Root>

@@ -28,7 +28,9 @@ export async function POST(request: NextRequest) {
   try {
     const form = await request.formData(), file = form.get("file")
     const name = String(form.get("name") || "").trim(), uploadId = String(form.get("uploadId") || "")
+    const note = String(form.get("note") ?? "").trim()
     if (!name || name.length > 150 || !/^[a-f0-9-]{36}$/i.test(uploadId)) return json({ error: "Donnez un nom à votre document (150 caractères maximum)." }, 400)
+    if (note) return json({ error: "Les notes de préparation sont renseignées par votre conseiller." }, 400)
     if (!(file instanceof File) || !file.size || file.size > 5 * 1024 * 1024 || !["application/pdf", "image/jpeg", "image/png"].includes(file.type) || !/\.(pdf|jpe?g|png)$/i.test(file.name)) return json({ error: "PDF, JPG ou PNG de 5 Mo maximum." }, 400)
     const key = `portal:${session.id}:${uploadId}`
     const previous = (await loadStudentDocuments(session.id)).find(doc => doc.key === key)

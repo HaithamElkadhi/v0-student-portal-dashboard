@@ -45,7 +45,7 @@ export default function StudentJourneyTimeline({ summary, payments, summaryError
   const steps: { label: string; icon: LucideIcon; state: StepState }[] = [
     { label: "Orientation", icon: Users, state: summaryError || !summary ? "unknown" : orientationDone ? "done" : "current" },
     { label: "Paiement", icon: CreditCard, state: paymentError || payments === null ? "unknown" : paymentDone ? "done" : "current" },
-    { label: "Documents", icon: FolderOpen, state: summaryError || !summary ? "unknown" : summary.applicationsCount > 0 || admissionDone ? "done" : paymentDone || hasDocument(admission?.admissionFolderDocuments) ? "current" : "upcoming" },
+    { label: "Préparation", icon: FolderOpen, state: summaryError || !summary ? "unknown" : summary.applicationsCount > 0 || admissionDone ? "done" : paymentDone || hasDocument(admission?.admissionFolderDocuments) ? "current" : "upcoming" },
     { label: "Admission", icon: Landmark, state: summaryError || !summary ? "unknown" : admissionDone ? "done" : admissionRejected ? "blocked" : summary.applicationsCount > 0 ? "current" : "upcoming" },
     { label: "Bourse", icon: GraduationCap, state: "soon" },
     { label: "Visa", icon: BookUser, state: "soon" },
@@ -68,7 +68,7 @@ export default function StudentJourneyTimeline({ summary, payments, summaryError
         const chipLabel = visualState === "overdue" ? "En retard" : visualState === "due" ? "À régler" : stateLabels[state]
         return <li key={label} aria-current={state === "current" ? "step" : undefined} className="relative flex min-w-0 items-center gap-4 pb-6 last:pb-0 xl:flex-col xl:gap-0 xl:pb-0 xl:text-center">
           {label === "Orientation" && <Link href="/student_italy/orientation" aria-label="Consulter ma fiche d’orientation" className="absolute inset-0 z-20 rounded-xl transition-colors hover:bg-blue-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-4" />}
-          {label === "Documents" && <Link href="/student_italy/documents" aria-label="Consulter mes documents" className="absolute inset-0 z-20 rounded-xl transition-colors hover:bg-blue-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-4" />}
+          {label === "Préparation" && <Link href="/student_italy/preparation" aria-label="Ouvrir la préparation du dossier" className="absolute inset-0 z-20 rounded-xl transition-colors hover:bg-blue-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-4" />}
           {label === "Admission" && <Link href="/student_italy/admission" aria-label="Consulter mes candidatures" className="absolute inset-0 z-20 rounded-xl transition-colors hover:bg-blue-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-4" />}
           {label === "Paiement" && <Link href="/student_italy/paiement" aria-label="Consulter mes paiements" className="absolute inset-0 z-20 rounded-xl transition-colors hover:bg-blue-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-4" />}
           {index < steps.length - 1 && <span aria-hidden="true" className={"absolute left-[31px] top-16 h-[calc(100%-4rem)] border-l-2 xl:left-1/2 xl:top-[74px] 2xl:top-[80px] xl:h-0 xl:w-full xl:border-l-0 xl:border-t-2 " + (state === "done" ? "border-emerald-500" : "border-dashed border-slate-200")} />}

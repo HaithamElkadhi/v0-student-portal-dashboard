@@ -122,12 +122,14 @@ function uploadForm(name = 'Mon diplôme') {
 }
 test('named upload is saved to dashboard reviews and marked received', async () => {
   const writes = []
-  const result = await apiWith([], undefined, writes).POST(req(uploadForm()))
+  const form = uploadForm()
+  const result = await apiWith([], undefined, writes).POST(req(form))
   assert.equal(result.status, 200)
   const created = JSON.parse(writes[0].body).fields
   assert.equal(created['Document Name'], 'Mon diplôme')
   assert.equal(created['Student Record ID'], 'recStudent')
   assert.equal(created.Source, 'Academic')
+  assert.equal(created['Internal Note'], undefined)
   assert.match(writes[1].url, /uploadAttachment$/)
   assert.equal(JSON.parse(writes[2].body).fields['Review Status'], 'Received')
   assert.equal(writes.some(write => write.method === 'DELETE'), false)
@@ -143,4 +145,109 @@ test('rejects uploads without a name or with an unsupported file before writing'
   const form = uploadForm()
   form.set('file', new File(['script'], 'test.html', { type: 'text/html' }))
   assert.equal((await apiWith([]).POST(req(form))).status, 400)
+})
+
+test('student uploads cannot write preparation notes', async () => {
+  const writes = []
+  const form = uploadForm()
+  form.set('note', 'Change agent note')
+  const response = await apiWith([], undefined, writes).POST(req(form))
+  assert.equal(response.status, 400)
+  assert.equal(writes.length, 0)
+})
+
+const preparationModule = moduleAt('lib/student-preparation.ts', {
+  '@/lib/student-document-requirements': moduleAt('lib/student-document-requirements.ts'),
+})
+test('student preparation reflects agent statuses and only exposes dedicated follow-up notes', () => {
+  const value = preparationModule.studentPreparation({
+    flduBzqGehqb5iu4f: 'Not Created',
+    fldmzKbBTH2hcZGiO: true, fldxTej8hHvwewEPd: 'Meeting confirmé',
+    fldsMJ7gvO2Qz9UzT: JSON.stringify({ version: 1, profile: { received: [] }, documents: [{ id: 'passport', name: 'Passeport' }] }),
+    fld2YHuug3Idlz1zb: true, fldc3wGaASfUESuQP: false,
+    fldJs1RQZowDj3XDT: 'Cacher', flddPj5ksWs0wLcCF: true,
+    fldZMP2nd2ziXdLHp: 'Rendez-vous pris', fldf4cSkiS8DHMTY3: 'Apporter les originaux',
+    fldVsPZX5T0OO0VhS: true, fld0t9hHbtgI873j6: 'Dossier reçu',
+    privateNote: 'PRIVATE NOTE',
+  })
+  assert.equal(value.identity.done, false)
+  assert.equal(value.meeting.done, true)
+  assert.equal(value.meeting.note, 'Meeting confirmé')
+  assert.equal(value.documents.done, true)
+  assert.equal(value.documents.count, 1)
+  assert.equal(value.mousad9a.done, true)
+  assert.equal(value.translation.done, false)
+  assert.equal(value.test.type, 'Cacher')
+  assert.equal(value.test.done, false)
+  assert.equal(value.dv.done, true)
+  assert.equal(value.dv.status, 'Rendez-vous pris')
+  assert.equal(value.deposit.note, 'Dossier reçu')
+  assert.equal(JSON.stringify(value).includes('PRIVATE NOTE'), false)
+  const missing = preparationModule.studentPreparation({ fldsMJ7gvO2Qz9UzT: '{bad' })
+  assert.equal(missing.documents.error, true)
+  assert.equal(missing.documents.done, false)
+  assert.equal(missing.dv.status, 'Non fait')
+})
+
+test('student preparation API is read-only and tied to the session student', async () => {
+  let session = null
+  const calls = []
+  const endpoint = moduleAt('app/api/student-documents/preparation/route.ts', {
+    'next/server': { NextResponse: { json: (body, options) => ({ body, ...options }) } },
+    '@/lib/student-document-session': { documentSession: () => session },
+    '@/lib/student-document-store': { documentRequest: async path => {
+      calls.push(path)
+      return { fields: { fldJs1RQZowDj3XDT: 'EF Test', flddPj5ksWs0wLcCF: true } }
+    } },
+    '@/lib/airtable-config': { AIRTABLE: { tables: { prospects: { id: 'prospects' } } } },
+    '@/lib/student-preparation': preparationModule,
+  })
+  const request = { nextUrl: new URL('https://portal.test/api/student-documents/preparation?folderId=TEST123') }
+  assert.equal((await endpoint.GET(request)).status, 401)
+  session = { id: 'recStudent', folderId: 'OTHER' }
+  assert.equal((await endpoint.GET(request)).status, 401)
+  assert.equal(calls.length, 0)
+  session.folderId = 'TEST123'
+  const response = await endpoint.GET(request)
+  assert.equal(response.body.test.type, 'EF Test')
+  assert.equal(response.body.test.done, true)
+  assert.equal(response.headers['Cache-Control'], 'private, no-store')
+  assert.equal(calls[0], 'prospects/recStudent?returnFieldsByFieldId=true')
+  assert.equal(endpoint.POST, undefined)
+  assert.equal(endpoint.PATCH, undefined)
+})
+
+test('credentials require a matching signed student session and exclude unrelated accounts', async () => {
+  let session = null
+  const calls = []
+  const accountsApi = moduleAt('app/api/student-documents/accounts/route.ts', {
+    'next/server': { NextResponse: { json: (body, options) => ({ body, ...options }) } },
+    '@/lib/student-document-session': { documentSession: () => session },
+    '@/lib/airtable-config': { AIRTABLE: { tables: { prospects: { id: 'prospects' } } } },
+    '@/lib/student-document-store': { documentRequest: async path => {
+      calls.push(path)
+      if (path.startsWith('prospects/')) return { fields: { flddNBP0jC3rYtcF0: ['recOwned', 'recForeign'], flduBzqGehqb5iu4f: 'test@example.com' } }
+      const fields = { flduaQtpEJlr03ivQ: ['recStudent'], fld6GymQ8Gh6hQnwX: 'test-user', fld18yBzVSD5BtP3y: 'fixture-password', fld4kKOkH1VvqUfUk: 'javascript:alert(1)' }
+      return { records: [
+        { id: 'recOwned', fields },
+        { id: 'recForeign', fields: { ...fields, flduaQtpEJlr03ivQ: ['recOther'] } },
+        { id: 'recUnlinked', fields },
+      ] }
+    } },
+  })
+  const request = { nextUrl: new URL('https://portal.test/api/student-documents/accounts?folderId=TEST123') }
+  assert.equal((await accountsApi.GET(request)).status, 401)
+  assert.equal(calls.length, 0)
+  session = { id: 'recStudent', folderId: 'OTHER' }
+  assert.equal((await accountsApi.GET(request)).status, 401)
+  assert.equal(calls.length, 0)
+  session.folderId = 'TEST123'
+  const result = await accountsApi.GET(request)
+  assert.equal(result.status, 200)
+  assert.equal(result.body.accounts.length, 1)
+  assert.equal(result.body.accounts[0].id, 'recOwned')
+  assert.equal(result.body.accounts[0].password, 'fixture-password')
+  assert.equal(result.body.accounts[0].url, '')
+  assert.equal(result.headers['Cache-Control'], 'private, no-store')
+  assert.equal(calls[0], 'prospects/recStudent?returnFieldsByFieldId=true')
 })
