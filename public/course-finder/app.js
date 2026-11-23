@@ -28,23 +28,24 @@ const collator = new Intl.Collator('en', {sensitivity:'base', numeric:true});
 let catalog = [], byId = new Map(), view = 'explore', page = 1, query = '', loaded = false, loadError = false, toastTimer;
 
 const favorites = new Set();
-let saved = [];
 let savesReady = false;
 let saving = false;
+let exporting = false;
 
-async function savesRequest(method, body) {
+async function savesRequest(method, body, pdf = false) {
   const student = JSON.parse(sessionStorage.getItem('studentInfo') || 'null');
   if (!student) throw new Error('Sign in to the student portal to access your saves.');
   const account = encodeURIComponent(JSON.stringify([
     String(student.email ?? '').trim().toLowerCase(),
     String(student.folderId ?? '').trim(),
   ]));
-  const response = await fetch('/api/student-courses', {
+  const response = await fetch('/api/student-courses' + (pdf ? '?format=pdf' : ''), {
     method,
     cache: 'no-store',
     headers: {'Content-Type': 'application/json', 'x-course-account': account},
     body: body ? JSON.stringify(body) : undefined,
   });
+  if (pdf && response.ok) return response.blob();
   const result = await response.json();
   if (!response.ok) throw new Error(result.error);
   return result;
@@ -58,7 +59,6 @@ async function loadSaves() {
     const result = await savesRequest('GET');
     favorites.clear();
     result.favorites.forEach(id => favorites.add(id));
-    saved = result.searches;
     savesReady = true;
     el('saves-retry').parentElement.hidden = true;
   } catch (error) {
@@ -68,14 +68,14 @@ async function loadSaves() {
   render();
 }
 
-async function updateSave(kind, value, active, apply, focus) {
+async function updateSave(value, active, apply, focus) {
   if (!savesReady || saving) return;
   saving = true;
   render();
   try {
-    await savesRequest('PUT', {kind, value, active});
+    await savesRequest('PUT', {kind: 'favorite', value, active});
     apply();
-    toast(kind === 'favorite' ? (active ? 'Course saved' : 'Course removed') : (active ? 'Search saved' : 'Search removed'));
+    toast(active ? 'Course saved' : 'Course removed');
   } catch (error) {
     toast(error instanceof TypeError ? 'Your changes could not be saved. Try again.' : error.message);
   } finally {
@@ -146,9 +146,6 @@ function runSearch(value) {
   el('query').value = query;
   updateView('explore');
 }
-function searchLabel(s) {
-  return [s.query && '“' + s.query + '”', ...filterKeys.map(k => label(s[k]))].filter(Boolean).join(' · ') || 'All courses';
-}
 function card(c) {
   const liked = favorites.has(c.id);
   const meta = [label(c.language),c.campus,c.duration && c.duration + ' years'].filter(Boolean).join(' · ');
@@ -167,17 +164,11 @@ function render() {
   const s = state();
   document.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-pressed',button.dataset.tab === view));
   el('fav-count').textContent = favorites.size;
-  el('browse').hidden = view === 'saved';
-  el('saved').hidden = view !== 'saved';
   el('filters').hidden = view !== 'explore';
-  el('save').hidden = view !== 'explore';
-  el('save').disabled = !loaded || !savesReady || saving;
+  el('export-favorites').hidden = view !== 'favorites';
+  el('export-favorites').disabled = !savesReady || !loaded || saving || exporting || !favorites.size;
   el('pagination').hidden = true;
   el('cards').innerHTML = '';
-  if (view === 'saved') {
-    el('saved-list').innerHTML = saved.map((item,i) => '<div class="saved-row"><strong>' + escape(searchLabel(item)) + '</strong><div><button data-apply="' + i + '"' + (!loaded ? ' disabled' : '') + '>Run search</button><button data-remove="' + i + '"' + (saving ? ' disabled' : '') + '>Remove</button></div></div>').join('') || (savesReady ? '<div class="empty">Your saved searches will appear here.</div>' : '');
-    return;
-  }
   el('scope').textContent = view === 'favorites' ? 'YOUR SHORTLIST' : 'COURSE CATALOG';
   el('result-title').textContent = view === 'favorites' ? 'Favorite courses' : s.university || 'Explore courses';
   if (view === 'favorites' && !savesReady) {
@@ -224,11 +215,25 @@ el('search').addEventListener('submit',event => { event.preventDefault(); runSea
 for (const k of [...filterKeys,'sort']) el(k).addEventListener('change',() => { page = 1; render(); });
 el('reset').addEventListener('click',() => { filterKeys.forEach(k => {el(k).value = '';}); el('sort').value = 'relevance'; runSearch(''); });
 el('saves-retry').addEventListener('click', loadSaves);
-el('save').addEventListener('click',() => {
-  const s = state();
-  if (saved.some(item => JSON.stringify(item) === JSON.stringify(s))) return toast('Search already saved');
-  void updateSave('search', s, true, () => saved.unshift(s), () => el('save'));
+el('export-favorites').addEventListener('click', async () => {
+  exporting = true;
+  render();
+  try {
+    const pdf = await savesRequest('GET', undefined, true);
+    const url = URL.createObjectURL(pdf);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'jeexpert-favorite-courses.pdf';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  } catch {
+    toast('The PDF could not be downloaded. Try again.');
+  } finally {
+    exporting = false;
+    render();
+  }
 });
+
 document.addEventListener('click',event => {
   const button = event.target.closest('button');
   if (!button) return;
@@ -239,20 +244,10 @@ document.addEventListener('click',event => {
   if (d.details) detail(byId.get(d.details));
   if (d.favorite) {
     const active = !favorites.has(d.favorite);
-    void updateSave('favorite', d.favorite, active, () => {
+    void updateSave(d.favorite, active, () => {
       if (active) favorites.add(d.favorite);
       else favorites.delete(d.favorite);
     }, () => document.querySelector('[data-favorite="' + d.favorite + '"]') || document.querySelector('[data-tab="' + view + '"]'));
-  }
-  if (d.apply !== undefined) {
-    const s = saved[Number(d.apply)];
-    for (const k of [...filterKeys,'sort']) el(k).value = s[k] || '';
-    runSearch(s.query || '');
-  }
-  if (d.remove !== undefined) {
-    const index = Number(d.remove);
-    void updateSave('search', saved[index], false, () => saved.splice(index, 1),
-      () => document.querySelector('[data-remove="' + index + '"]') || document.querySelector('[data-tab="saved"]'));
   }
 });
 for (const [id,delta] of [['prev',-1],['next',1]]) el(id).addEventListener('click',() => { page += delta; render(); el('result-title').scrollIntoView({block:'start'}); });
