@@ -27,7 +27,7 @@ export function GET() {
     paragraph(administration, 11)
   }
   y += 4
-  paragraph("Comment faire la mousad9a", 14, true)
+  paragraph(guide.stepsTitle, 14, true)
   for (const [index, step] of guide.steps.entries()) {
     paragraph(`${index + 1}. ${step.title}`, 11, true)
     paragraph(step.text, 11)

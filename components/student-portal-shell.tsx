@@ -16,7 +16,7 @@ import {
   CalendarDays,
   ChevronDown,
   Headset,
-  BookOpen,
+  Newspaper,
   GraduationCap,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -32,7 +32,7 @@ const INTEGRATION = "/student_italy/integration"
 const SUPPORT = "/student_italy/support"
 const REGLEMENT = "/student_italy/reglement"
 const BOOKING = "/student_italy/rendez-vous"
-const GUIDE = "/student_italy/guide"
+const NEWS = "/student_italy/actualites"
 const COURSES = "/student_italy/courses"
 
 function pageLabel(
@@ -59,7 +59,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
 
   const closeMenu = () => setMenuOpen(false)
   const isBooking = pathname === BOOKING
-  const isGuide = pathname === GUIDE || pathname?.startsWith(GUIDE + "/")
+  const isNews = pathname === NEWS
 
   useEffect(() => {
     if (menuOpen) {
@@ -106,7 +106,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
       (href === INTEGRATION && isIntegration) ||
       (href === SUPPORT && isSupport) ||
       (href === BOOKING && isBooking) ||
-      (href === GUIDE && isGuide) ||
+      (href === NEWS && isNews) ||
       (href === COURSES && isCourses) ||
       (href === REGLEMENT && isReglement) ||
       false
@@ -129,7 +129,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
   const isPreparation = pathname === "/student_italy/preparation" || pathname?.startsWith("/student_italy/preparation/")
   const isDocuments = pathname === "/student_italy/documents" || pathname?.startsWith("/student_italy/documents/")
   const isOrientation = pathname === "/student_italy/orientation" || pathname?.startsWith("/student_italy/orientation/")
-  const label = pathname === "/listedocuments" ? "Liste des documents" : isCourses ? "Courses" : isGuide ? "Guide des démarches" : isBooking ? "Rendez-vous" : isOrientation ? "Orientation" : isPreparation ? "Préparation" : isDocuments ? "Documents" : isSupport ? "Support" : isHome ? "Accueil" : isProfile ? "Profil" : pageLabel(isPayment, isAdmission, isVisa, isScholarship, isIntegration, isReglement)
+  const label = pathname === "/listedocuments" ? "Liste des documents" : isCourses ? "Courses" : isNews ? "Actualités" : isBooking ? "Rendez-vous" : isOrientation ? "Orientation" : isPreparation ? "Préparation" : isDocuments ? "Documents" : isSupport ? "Support" : isHome ? "Accueil" : isProfile ? "Profil" : pageLabel(isPayment, isAdmission, isVisa, isScholarship, isIntegration, isReglement)
   const firstName = studentInfo.name.trim().split(/\s+/)[0] || "Mon profil"
   const initials = (firstName[0] + (studentInfo.surname?.[0] || "")).toUpperCase()
   const photo = Array.isArray(studentInfo.photo) ? studentInfo.photo[0]?.url : typeof studentInfo.photo === "string" ? studentInfo.photo : null
@@ -166,7 +166,7 @@ export function StudentPortalShell({ children }: { children: ReactNode }) {
           <nav className="space-y-1 px-3 py-2" aria-label="Sections">
             <NavLink href={HOME} icon={<House className={navIconClass} aria-hidden />}>Accueil</NavLink>
             <NavLink href={COURSES} icon={<GraduationCap className={navIconClass} aria-hidden />}>Courses</NavLink>
-            <NavLink href={GUIDE} icon={<BookOpen className={navIconClass} aria-hidden />}>Guide des démarches</NavLink>
+            <NavLink href={NEWS} icon={<Newspaper className={navIconClass} aria-hidden />}>Actualités</NavLink>
             <div className="md:hidden"><NavLink href={BOOKING} icon={<CalendarDays className={navIconClass} aria-hidden />}>Réserver un rendez-vous</NavLink></div>
             <NavLink href={SUPPORT} icon={<LifeBuoy className={navIconClass} aria-hidden />}>
               Support

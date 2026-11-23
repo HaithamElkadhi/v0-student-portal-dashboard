@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
+import { isOrientationComplete } from "@/lib/student-journey-status"
 import { CalendarDays, UserRound, GraduationCap, Wallet, Sparkles, FileText, type LucideIcon } from "lucide-react"
 
 const groupStyles: Record<string, { icon: LucideIcon; color: string }> = {
@@ -26,16 +27,18 @@ function formattedValue(label: string, value: unknown): string {
 }
 
 export default function StudentProposalDetails({ prospectId }: { prospectId?: string }) {
-  const [groups,setGroups] = useState<Group[] | null>(null)
+  const [details, setDetails] = useState<{ groups: Group[]; percent: number } | null>(null)
+  const groups = details?.groups
+  const complete = isOrientationComplete(details?.percent)
   const [error,setError] = useState(false)
   const [notFound,setNotFound] = useState(false)
   const [retry,setRetry] = useState(0)
   useEffect(() => {
     let cancelled = false
-    setGroups(null); setError(false); setNotFound(false)
+    setDetails(null); setError(false); setNotFound(false)
     fetch("/api/proposal-details?prospectId=" + encodeURIComponent(prospectId || ""))
       .then(async res => { if (res.status === 404) { if (!cancelled) setNotFound(true); return null }; if (!res.ok) throw new Error(); return res.json() })
-      .then(data => { if (data && !cancelled) { if (!Array.isArray(data.groups)) throw new Error(); setGroups(data.groups) } })
+      .then(data => { if (data && !cancelled) { if (!Array.isArray(data.groups) || !Number.isFinite(data.percent)) throw new Error(); setDetails(data) } })
       .catch(() => { if (!cancelled) setError(true) })
     return () => { cancelled = true }
   }, [prospectId,retry])
@@ -43,7 +46,12 @@ export default function StudentProposalDetails({ prospectId }: { prospectId?: st
     {error ? <div role="alert" className="rounded-xl border border-red-100 bg-red-50 p-5 text-sm text-red-800"><p>Impossible de charger votre fiche d’orientation.</p><Button variant="outline" className="mt-3 bg-white" onClick={() => setRetry(value => value + 1)}>Réessayer</Button></div>
       : notFound || groups?.length === 0 ? <div className="rounded-xl border border-dashed border-blue-200 bg-white p-6 text-center"><FileText className="mx-auto mb-3 h-8 w-8 text-blue-500" aria-hidden="true" /><p className="font-semibold text-[#173B65]">Votre fiche sera bientôt disponible</p><p className="mt-2 text-sm leading-relaxed text-slate-500">Les informations de votre projet apparaîtront ici dès leur enregistrement par votre conseiller.</p></div>
       : !groups ? <div role="status" className="space-y-4"><span className="sr-only">Chargement de votre fiche d’orientation…</span>{[0, 1, 2].map(index => <div key={index} className="h-36 animate-pulse rounded-xl border border-slate-100 bg-white p-5"><div className="h-4 w-1/3 rounded bg-slate-100" /><div className="mt-6 h-3 w-2/3 rounded bg-slate-100" /><div className="mt-3 h-3 w-1/2 rounded bg-slate-100" /></div>)}</div>
-      : <>{groups.map(group => {
+      : <>
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
+          <span className={"rounded-full px-3 py-1 font-medium " + (complete ? "bg-emerald-100 text-emerald-800" : "bg-blue-100 text-blue-700")}>{complete ? "Fait" : "En cours"}</span>
+          <span className="text-slate-600">{details?.percent} % des informations renseignées</span>
+        </div>
+        {groups.map(group => {
         const { icon: Icon, color } = groupStyles[group.title] || { icon: FileText, color: "bg-slate-100 text-slate-700" }
         return <section key={group.title} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="flex items-center gap-3 border-b border-slate-100 px-4 py-4 sm:px-5"><span className={"flex h-9 w-9 shrink-0 items-center justify-center rounded-xl " + color}><Icon className="h-4.5 w-4.5" aria-hidden="true" /></span><h3 className="text-sm font-semibold text-[#173B65]">{group.title === "Fiche d’orientation" ? "Les repères de votre fiche" : group.title}</h3></div>

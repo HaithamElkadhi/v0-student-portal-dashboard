@@ -65,7 +65,7 @@ export default function StudentJourneyTimeline({ summary, payments, summaryError
       {steps.map(({ label, icon: Icon, state }, index) => {
         const visualState: VisualState = label === "Paiement" && state === "current" ? payments?.some(payment => payment.status === "overdue") ? "overdue" : "due" : state
         const colors = stateStyles[visualState]
-        const chipLabel = visualState === "overdue" ? "En retard" : visualState === "due" ? "À régler" : stateLabels[state]
+        const chipLabel = visualState === "overdue" ? "En retard" : visualState === "due" ? "À régler" : label === "Orientation" && state === "done" ? "Fait" : stateLabels[state]
         return <li key={label} aria-current={state === "current" ? "step" : undefined} className="relative flex min-w-0 items-center gap-4 pb-6 last:pb-0 xl:flex-col xl:gap-0 xl:pb-0 xl:text-center">
           {label === "Orientation" && <Link href="/student_italy/orientation" aria-label="Consulter ma fiche d’orientation" className="absolute inset-0 z-20 rounded-xl transition-colors hover:bg-blue-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-4" />}
           {label === "Préparation" && <Link href="/student_italy/preparation" aria-label="Ouvrir la préparation du dossier" className="absolute inset-0 z-20 rounded-xl transition-colors hover:bg-blue-500/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-4" />}
@@ -78,7 +78,7 @@ export default function StudentJourneyTimeline({ summary, payments, summaryError
             {state === "done" && <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-emerald-500 text-white"><Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" /></span>}
           </span>
           <div className="min-w-0 xl:mt-4">
-            <p className="text-sm font-semibold text-[#173B65] xl:px-1 2xl:text-base"><span className="mr-2 text-xs text-slate-400 xl:hidden">{String(index + 1).padStart(2, "0")}</span>{label}</p>
+            <p className={"text-sm font-semibold xl:px-1 2xl:text-base " + (label === "Orientation" && state === "done" ? colors.number : "text-[#173B65]")}><span className="mr-2 text-xs text-slate-400 xl:hidden">{String(index + 1).padStart(2, "0")}</span>{label}</p>
             <span className={"mt-2 inline-flex rounded-full px-3 py-1 text-xs font-medium " + (loading && state !== "soon" ? "bg-slate-100 text-slate-500" : colors.chip)}>{loading && state !== "soon" ? "Chargement…" : chipLabel}</span>
           </div>
         </li>

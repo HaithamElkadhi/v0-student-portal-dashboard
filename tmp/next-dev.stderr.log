@@ -1,0 +1,113 @@
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\LEGION\package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\pnpm-lock.yaml
+
+[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+ ⚠ Minimum recommended TypeScript version is v5.1.0, older versions can potentially be incompatible with Next.js. Detected: 5.0.2
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\server\lib\trace\tracer.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+POST /api/payments: SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at POST (app\api\payments\route.ts:61:32)
+  59 | export async function POST(request: NextRequest) {
+  60 |   try {
+> 61 |     const body = await request.json()
+     |                                ^
+  62 |     const prospectId = typeof body.prospectId === "string" ? body.prospectId.trim() : ""
+  63 |     const emailRaw = typeof body.email === "string" ? body.email.trim() : ""
+  64 |
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\server\lib\trace\tracer.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+POST /api/payments: SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at POST (app\api\payments\route.ts:61:32)
+  59 | export async function POST(request: NextRequest) {
+  60 |   try {
+> 61 |     const body = await request.json()
+     |                                ^
+  62 |     const prospectId = typeof body.prospectId === "string" ? body.prospectId.trim() : ""
+  63 |     const emailRaw = typeof body.email === "string" ? body.email.trim() : ""
+  64 |
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\server\lib\trace\tracer.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+POST /api/payments: SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at POST (app\api\payments\route.ts:61:32)
+  59 | export async function POST(request: NextRequest) {
+  60 |   try {
+> 61 |     const body = await request.json()
+     |                                ^
+  62 |     const prospectId = typeof body.prospectId === "string" ? body.prospectId.trim() : ""
+  63 |     const emailRaw = typeof body.email === "string" ? body.email.trim() : ""
+  64 |
+ ⨯ ./components/student-documents.tsx
+Error:   [31mx[0m Expected '</', got ')'
+     ,-[[36;1;4mC:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\components\student-documents.tsx[0m:164:1]
+ [2m161[0m |           {uploadError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{uploadError}</p>}{success && <p role="status" className="flex items-center gap-2 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-800"><Check className="h-4 w-4" aria-hidden="true" />Votre document a bien été envoyé.</p>}
+ [2m162[0m |         </form>
+ [2m163[0m |         <section aria-label="Documents déposés" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"><div className="mb-4 flex items-center justify-between gap-3"><h2 className="text-base font-semibold text-[#173B65]">Mes fichiers{documents.length > 0 && <span className="ml-2 text-sm font-normal text-slate-400">{documents.length}</span>}</h2><button type="button" disabled={loading || sending} aria-label="Actualiser mes fichiers" onClick={() => setRevision(v => v + 1)} className={button + " px-3"}><RefreshCw className="h-4 w-4" aria-hidden="true" /></button></div>
+ [2m164[0m |           {loading ? <p role="status" className="py-5 text-sm text-slate-500">Chargement des fichiers…</p> : data?.documentsError ? <p role="alert" className="text-sm text-red-800">{data.documentsError}</p> : !error && !documents.length ? <p className="rounded-lg bg-slate-50 p-5 text-sm text-slate-500">Vos fichiers apparaîtront ici après votre premier envoi.</p> : <ul className="divide-y divide-slate-100">{documents.map(doc => <li key={doc.key} className="flex items-center gap-3 py-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#173B65]"><FileText className="h-5 w-5" aria-hidden="true" /></span><div className="min-w-0 flex-1"><p className="break-words text-sm font-medium text-slate-800">{doc.name}</p><p className={"mt-1 text-xs " + (doc.status === "Validated" ? "text-emerald-700" : doc.status === "Needs correction" ? "text-red-700" : "text-slate-500")}>{statusLabels[doc.status] || "Reçu"}</p></div>{doc.file && <a href={doc.file.url} target="_blank" rel="noopener noreferrer" aria-label={"Ouvrir " + doc.name + " dans un nouvel onglet"} className={button + " shrink-0 px-3"}><ExternalLink className="h-4 w-4" aria-hidden="true" /></a>}</li>))}</ul>}
+     : [35;1m                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       ^[0m
+ [2m165[0m |         </section>
+ [2m166[0m |       </Tabs.Content>
+ [2m167[0m |     </Tabs.Root>}
+     `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./components/student-documents.tsx
+./app/listedocuments/page.tsx
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\server\base-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\server\next-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\server\dev\next-dev-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\trace\trace.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\server\lib\router-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\server\lib\start-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+Verification error: TypeError: fetch failed
+    at async POST (app\api\verify-student\route.ts:52:22)
+  50 |     })
+  51 |
+> 52 |     const response = await fetch(url, {
+     |                      ^
+  53 |       headers: {
+  54 |         Authorization: `Bearer ${AIRTABLE_API_KEY}`,
+  55 |         "Content-Type": "application/json", {
+  [cause]: Error: getaddrinfo ENOTFOUND api.airtable.com
+      at ignore-listed frames {
+    errno: -3008,
+    code: 'ENOTFOUND',
+    syscall: 'getaddrinfo',
+    hostname: 'api.airtable.com'
+  }
+}
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\server\lib\trace\tracer.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+POST /api/payments: SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at POST (app\api\payments\route.ts:61:32)
+  59 | export async function POST(request: NextRequest) {
+  60 |   try {
+> 61 |     const body = await request.json()
+     |                                ^
+  62 |     const prospectId = typeof body.prospectId === "string" ? body.prospectId.trim() : ""
+  63 |     const emailRaw = typeof body.email === "string" ? body.email.trim() : ""
+  64 |
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+C:\Users\LEGION\Desktop\Jeexpert_apps\v0-student-portal-dashboard\node_modules\.pnpm\next@16.0.7_react-dom@19.2.0_react@19.2.0__react@19.2.0\node_modules\next\dist\server\lib\trace\tracer.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+POST /api/payments: SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>)
+    at POST (app\api\payments\route.ts:61:32)
+  59 | export async function POST(request: NextRequest) {
+  60 |   try {
+> 61 |     const body = await request.json()
+     |                                ^
+  62 |     const prospectId = typeof body.prospectId === "string" ? body.prospectId.trim() : ""
+  63 |     const emailRaw = typeof body.email === "string" ? body.email.trim() : ""
+  64 |

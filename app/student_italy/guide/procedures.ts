@@ -7,7 +7,7 @@ const translatorList = "https://ambtunisi.esteri.it/wp-content/uploads/2024/10/L
 
 export const guideWhatsApp = "https://wa.me/393520880880"
 
-type Procedure = {
+export type Procedure = {
   slug: string
   title: string
   label: string

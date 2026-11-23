@@ -1,3 +1,4 @@
+import { readApplicationEmail } from "@/lib/airtable-config"
 import { requiredDocuments } from "@/lib/student-document-requirements"
 
 export const preparationTestTypes = ["Cacher", "IELTS ou équivalent", "CISIA ou équivalent", "EF Test"] as const
@@ -16,9 +17,8 @@ export type StudentPreparation = {
 
 const text = (value: unknown) => typeof value === "string" ? value : ""
 
-export function studentPreparation(fields: Record<string, unknown>): StudentPreparation {
-  const applicationEmail = text(fields.flduBzqGehqb5iu4f).trim()
-  const validEmail = /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(applicationEmail)
+export function studentPreparation(fields: Record<string, unknown>, linkedApplicationEmail = ""): StudentPreparation {
+  const applicationEmail = linkedApplicationEmail || readApplicationEmail(fields)
   let documents: StudentPreparation["documents"] = { done: false, count: 0, error: false }
   if (fields.fldsMJ7gvO2Qz9UzT) {
     try {
@@ -32,7 +32,7 @@ export function studentPreparation(fields: Record<string, unknown>): StudentPrep
   const status = fields.fldZMP2nd2ziXdLHp === "Fait" || fields.fldZMP2nd2ziXdLHp === "Rendez-vous pris"
     ? fields.fldZMP2nd2ziXdLHp : "Non fait"
   return {
-    identity: { done: validEmail, applicationEmail: validEmail ? applicationEmail : "" },
+    identity: { done: Boolean(applicationEmail), applicationEmail },
     meeting: { done: fields.fldmzKbBTH2hcZGiO === true, note: text(fields.fldxTej8hHvwewEPd) },
     documents,
     mousad9a: { done: fields.fld2YHuug3Idlz1zb === true },

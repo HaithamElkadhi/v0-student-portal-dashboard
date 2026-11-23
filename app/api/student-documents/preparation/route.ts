@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { documentSession } from "@/lib/student-document-session"
 import { documentRequest } from "@/lib/student-document-store"
 import { AIRTABLE } from "@/lib/airtable-config"
+import { loadStudentAccounts, applicationEmailFromAccounts } from "@/lib/student-linked-accounts"
 import { studentPreparation } from "@/lib/student-preparation"
 
 export async function GET(request: NextRequest) {
@@ -12,7 +13,9 @@ export async function GET(request: NextRequest) {
   }
   try {
     const record = await documentRequest(AIRTABLE.tables.prospects.id + "/" + session.id + "?returnFieldsByFieldId=true")
-    return NextResponse.json(studentPreparation(record.fields || {}), { headers })
+    const fields = record.fields ?? {}
+    const accounts = await loadStudentAccounts(session.id, fields)
+    return NextResponse.json(studentPreparation(fields, applicationEmailFromAccounts(accounts)), { headers })
   } catch {
     return NextResponse.json({ error: "Suivi du test indisponible." }, { status: 502, headers })
   }

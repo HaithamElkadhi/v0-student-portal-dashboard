@@ -43,7 +43,7 @@ const stepDefinitions = [
     title: "Déclaration de valeur ou CIMEA",
     description: "Vérifiez auprès de votre établissement quel justificatif de diplôme il accepte.",
     links: [
-      { href: `${guide}/declaration-de-valeur`, label: "Déclaration de valeur" },
+      { href: `${portal}/preparation/declaration-de-valeur`, label: "Déclaration de valeur" },
       { href: `${guide}/cimea`, label: "CIMEA" },
     ],
   },

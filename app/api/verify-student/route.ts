@@ -1,3 +1,4 @@
+import { readApplicationEmail } from "@/lib/airtable-config"
 import { NextRequest, NextResponse } from "next/server"
 import { recordStudentLogin } from "@/lib/student-login-history"
 import { setCourseSession, setDocumentSession } from "@/lib/student-document-session"
@@ -313,14 +314,7 @@ export async function POST(request: NextRequest) {
           "dossier original form",
         ]),
         // Bloc 4 - Requirement
-        emailForApplication: (() => {
-          // Use exact field name "Email For application" from Airtable Prospects table
-          if (fields["Email For application"] !== undefined && fields["Email For application"] !== null && fields["Email For application"] !== "") {
-            return fields["Email For application"]
-          }
-          // Fallback to other variations
-          return getFieldValue(["Email For Application", "email for application", "Email for application", "Application Email", "application email", "Email Application", "email application"])
-        })(),
+        emailForApplication: readApplicationEmail(fields),
         accountUniversitaly: getFieldValue(["Account_Universitaly", "Account Universitaly", "account universitaly", "account_universitaly", "Universitaly Account", "universitaly account"]),
         accountPrenotami: getFieldValue(["Account Pronotami", "Account_Pronotami", "account pronotami", "account_pronotami", "Pronotami Account", "pronotami account", "Account Prenotami", "account prenotami"]),
         // Bloc 5 - Application

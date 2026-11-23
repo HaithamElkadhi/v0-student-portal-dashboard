@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, BookOpen, CalendarDays, FolderOpen } from "lucide-react"
+import { ArrowRight, Newspaper, CalendarDays, FolderOpen } from "lucide-react"
 import StudentProfileSummary from "@/components/student-profile-summary"
 import { useStudentPortal } from "@/components/student-portal-context"
 
@@ -19,8 +19,8 @@ export default function StudentDashboardHome() {
           <FolderOpen className="size-5 shrink-0" aria-hidden="true" />
           <span className="break-all">Dossier {studentInfo.folderId || "à confirmer"}</span>
         </Link>
-        <Link href="/student_italy/guide" className="mt-2 flex min-h-11 w-fit max-w-full items-center gap-2 rounded-lg text-sm font-medium text-white underline decoration-white/60 underline-offset-4 hover:decoration-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-          <BookOpen className="size-4 shrink-0" aria-hidden="true" /> Guide des démarches
+        <Link href="/student_italy/actualites" className="mt-2 flex min-h-11 w-fit max-w-full items-center gap-2 rounded-lg text-sm font-medium text-white underline decoration-white/60 underline-offset-4 hover:decoration-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+          <Newspaper className="size-4 shrink-0" aria-hidden="true" /> Actualités
         </Link>
       </section>
       <section className="flex min-w-0 flex-col justify-center gap-4 rounded-2xl border border-[#C5DEEE] bg-[#E2F4FC] p-5 sm:p-6">

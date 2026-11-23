@@ -67,3 +67,21 @@ export function getAirtableApiKey(): string {
   }
   return key;
 }
+
+export function readApplicationEmail(fields: Record<string, unknown> = {}): string {
+  for (const key of [
+    "flduBzqGehqb5iu4f",
+    "Email For application",
+    "Email For Application",
+    "email for application",
+    "Email for application",
+    "Application Email",
+    "application email",
+    "Email Application",
+    "email application",
+  ]) {
+    const value = fields[key]
+    if (typeof value === "string" && value.trim()) return value.trim()
+  }
+  return ""
+}
